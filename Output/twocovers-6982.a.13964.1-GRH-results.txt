@@ -41,7 +41,10 @@ Corresponding x-coordinates:
   pi((1/25 : -1/25 : 1/5 : -9/25 : 1)) = (0 : 1)
   pi((1 : -1 : 1 : -1 : 1)) = (1 : 0)
 List of points provably complete? yes (assuming GRH)
-Time: 49.060
+Subgroup of Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 48.310
 
 delta = -X + 1
 Found rational points:
@@ -49,7 +52,10 @@ Found rational points:
 Corresponding x-coordinates:
   pi((-1 : -1 : -1 : -3 : 1)) = (-2 : 1)
 List of points provably complete? yes (assuming GRH)
-Time: 46.640
+Subgroup of Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 55.590
 
 delta = 1
 Found rational points:
@@ -57,7 +63,10 @@ Found rational points:
 Corresponding x-coordinates:
   pi((0 : 0 : 0 : 0 : 1)) = (-1 : 1)
 List of points provably complete? yes (assuming GRH)
-Time: 66.990
+Subgroup of Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 79.780
 
 delta = 2*X^5 + 6*X^4 - 6*X^3 - 13*X^2 + 14*X + 1
 Found rational points:
@@ -67,7 +76,14 @@ Corresponding x-coordinates:
   pi((1 : -1 : 1 : -1 : 1)) = (1 : 1)
   pi((5/37 : -5/37 : 5/37 : -21/37 : 1)) = (13/5 : 1)
 List of points provably complete? yes (assuming GRH)
-Time: 618.650
+Subgroup of Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z + Z
+Defined on 4 generators (free)
+Time: 598.040
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 - 3*t^14 + 18*t^13 - 54*t^12 + 91*t^11 - 237*t^10 + 122*t^9 + 94*t^8 - 243*t^7 + 2877*t^6 - 1476*t^5 + 5596*t^4 - 4500*t^3 - 388*t^2 - 6000*t - 5824
+has class number 1.
 
 Done.
-Total time: 783.070
+Total time: 783.480
