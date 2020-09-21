@@ -8,6 +8,7 @@ SetClassGroupBounds("GRH");
 SetVerbose("MordellWeilGroup", 1);
 SetVerbose("MWSha", 1);
 SetVerbose("Selmer", 1);
+SetVerbose("EtaleAlg", 1);
 SetVerbose("TwoDescent", 1);
 SetVerbose("CasselsTate", 1);
 SetVerbose("EllChab", 1);

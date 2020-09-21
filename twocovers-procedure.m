@@ -14,10 +14,10 @@ SetVerbose("Selmer", 1);
 SetVerbose("TwoDescent", 1);
 SetVerbose("CasselsTate", 1);
 SetVerbose("EllChab", 1);
-SetVerbose("ClassGroup", 3);
+//SetVerbose("ClassGroup", 3);
 SetVerbose("LocSol", 1);
 
 SetLogFile("twocover-descent-log.txt");
 
-descent_procedure(C : SearchBound := 10000, AssumeGRH := false, OutputFile := "twocovers-6443.a.6443.1-output.txt");
+descent_procedure(C : SearchBound := 10000, AssumeGRH := true, OutputFile := "Output/twocovers-6443.a.6443.1-GRH-results.txt");
 

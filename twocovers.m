@@ -343,47 +343,6 @@ end function;
   Section 6: Applying elliptic Chabauty to twists
  *************************************************************/
 
-// Construct the covariants and invariants of a quartic polynomial
-function quartic_covariants_invariants(quartic)
-    coeffs := Eltseq(quartic);
-    _<X, Z> := PolynomialRing(BaseRing(quartic), 2);
-    // Invariant and covariants of binary quartic forms
-    U := &+[coeffs[i+1] * X^i * Z^(4-i) : i in [0 .. 4]];
-    a0 := coeffs[5];
-    a1 := 1/4 * coeffs[4];
-    a2 := 1/6 * coeffs[3];
-    a3 := 1/4 * coeffs[2];
-    a4 := coeffs[1];
-    U_X := Derivative(U, X);
-    U_Z := Derivative(U, Z);
-    U_XX := Derivative(U_X, X);
-    U_XZ := Derivative(U_X, Z);
-    U_ZZ := Derivative(U_Z, Z);
-    g := (1/144) * (U_XZ^2 - U_XX * U_ZZ);
-    h := (1/8) * (U_X * Derivative(g, Z) - U_Z * Derivative(g, X));
-    i := a0*a4 - 4*a1*a3 + 3*a2^2;
-    j := a0*a2*a4 + 2*a1*a2*a3 - a0*a3^2 - a4*a1^2 - a2^3;
-    return [U, g, h], [i, j];
-    // note: these satisfy the relation h^2 = 4*g^3 - i*g*U^2 - j*U^3
-end function;
-
-// Given an element s of K(x), return the minimal polynomial of s over Q(x)
-function minimal_polynomial_over_Qx(s)
-    K := BaseRing(Parent(s));
-    // Build K(x) as a field extension of Q(x)
-    Qx<x> := FunctionField(Rationals());
-    S<t> := PolynomialRing(Qx);
-    Kx<ww> := FunctionField(S!Eltseq(MinimalPolynomial(K.1)));
-    num := Numerator(s);
-    num_coeffs := [Eltseq(ck) : ck in Eltseq(num)];
-    num_Kx := &+[&+[num_coeffs[i][j] * ww^(j-1) : j in [1 .. #num_coeffs[i]]] * x^(i-1) : i in [1 .. #num_coeffs]];
-    denom := Denominator(s);
-    denom_coeffs := [Eltseq(ck) : ck in Eltseq(denom)];
-    denom_Kx := &+[&+[denom_coeffs[i][j] * ww^(j-1) : j in [1 .. #denom_coeffs[i]]] * x^(i-1) : i in [1 .. #denom_coeffs]];
-    s_Kx := num_Kx / denom_Kx;
-    return MinimalPolynomial(s_Kx);
-end function;
-
 // Determine if univariate polynomial has real root. Errs on the side of false positives.
 // TODO: make this numerically stable
 function has_real_root(f)
@@ -394,18 +353,18 @@ function has_real_root(f)
     complex_roots, errors := RootsNonExact(f);
     for i in [1 .. #complex_roots] do
         z := complex_roots[i];
-        err := errors[i];
+        err := Abs(errors[i]);
         if Abs(Im(z)) le err then
             // Complex root can't be bounded away from the real line, assume it's real
             return true, Re(z);
         end if;
     end for;
-    return false;
+    return false, _;
 end function;
 
 // Test if a plane curve has real points
-function curve_has_real_points(C : Precision := 200)
-    RR := RealField(Precision);
+function curve_has_real_points(C : precision := 200)
+    RR := RealField(precision);
     F := DefiningPolynomial(C);
     // Check point at infinity
     if Evaluate(F, [1, 0, 0]) eq 0 then
@@ -436,7 +395,7 @@ function curve_has_real_points(C : Precision := 200)
             return true, [b, root, 1];
         end if;
     end for;
-    return false;
+    return false, _;
 end function;
 
 // Test if the twist is locally solvable. If not, return a prime that fails.
@@ -470,6 +429,15 @@ function is_genus5_locally_solvable(Z, bad_primes : Check := true, Skip := [], C
     end if;
 end function;
 
+// Returns the fields and class groups needed for computing the 2-Selmer group, conditional on GRH.
+// Assumes E is given in the form y^2 = p(x).
+function two_selmer_class_groups(E)
+    p := HyperellipticPolynomials(E);
+    A := AbsoluteAlgebra(quo< Parent(p) | p >);
+    Cl := [ClassGroup(F : Proof := "GRH") : F in Components(A)];
+    return [<A[i], Cl[i]> : i in [1 .. #Cl]];
+end function;
+
 // Run elliptic Chabauty to determine points of Z_delta.
 /*
    The first return value is a set of points, the second return value a boolean.
@@ -481,8 +449,9 @@ end function;
    In case (1), we give up and return the empty set.
    In case (2), we give up and return whatever points we can find with a search.
    In case (3), we return the set of points that maps to the subgroup that we're able to find.
+   The third return value is a list of number fields and conditionally computed class groups.
 */
-function chabauty_on_twist(f, root1, root2, delta : Bound := 10000, PrimeBound := -1)
+function chabauty_on_twist(f, root1, root2, delta : Effort := 1, Bound := 10000, PrimeBound := -1)
     Z := genus5_canonical(f, root1, delta);
     // Search for points up to the given height bound on the genus 5 curve
     pts_Z := PointSearch(Z, Bound);
@@ -490,10 +459,10 @@ function chabauty_on_twist(f, root1, root2, delta : Bound := 10000, PrimeBound :
         fact := Factorization(Conductor(HyperellipticCurve(f)));
         bad_primes_under_bound := [p[1] : p in fact | PrimeBound eq -1 or p[1] le PrimeBound];
         if not is_genus5_locally_solvable(Z, bad_primes_under_bound) then
-            return {}, true; // Z is not locally solvable, so Z(Q) is empty
+            return {}, 0, true, []; // Z is not locally solvable, so Z(Q) is empty
         end if;
         // Z is locally solvable at finite primes but appears to have no points, so we give up.
-        return {}, false;
+        return {}, 0, false, [];
         // TODO: try Mordell-Weil sieve before giving up
     end if;
     // Since Z has a rational point, we use elliptic Chabauty
@@ -518,18 +487,18 @@ function chabauty_on_twist(f, root1, root2, delta : Bound := 10000, PrimeBound :
     // Construct the map to P^1 for elliptic Chabauty
     Ecov := E_to_E1 * E1_to_D * map< D -> ProjectiveSpace(Rationals(), 1) | [D.1, D.3] >;
     // Compute the Mordell-Weil group, and record whether it was provably computed
-    A, mw, bool_rank, bool_index := MordellWeilGroup(E);
+    A, mw, bool_rank, bool_index := MordellWeilGroup(E : Effort := Effort);
     mw_map := map< A -> E | a :-> mw(a) >;
     if TorsionFreeRank(A) lt Degree(MinimalPolynomial(root2)) then
         // Run elliptic Chabauty and record the set of points and the index parameter R
         V, R := Chabauty(mw_map, Ecov);
     else // Rank is too high, give up and return any points found
-        return pts_Z, false;
+        return pts_Z, 0, false, [];
     end if;
     VD := [E1_to_D(E_to_E1(mw_map(pt))) : pt in V];
     preimages := [Pullback(phi, pt) : pt in VD];
     rational_pts := &join[{Z!Eltseq(pt) : pt in Points(S) | IsCoercible(Z, Eltseq(pt))} : S in preimages];
-    return rational_pts, (bool_rank and bool_index);
+    return rational_pts, A, (bool_rank and bool_index), two_selmer_class_groups(E);
 end function;
 
 // Input: a degree 6 polynomial f over Q, a rational root root1, an irrational root root2, and a height bound.
@@ -544,7 +513,7 @@ function twocover_chabauty(f, root1, root2 : Bound := 10000)
     twists := products_of_subsets(twist_param_generators(f));
     Z_pts := [* *];
     for delta in twists do
-        pts, bool := chabauty_on_twist(f, root1, root2, delta : Bound := Bound);
+        pts, _, bool := chabauty_on_twist(f, root1, root2, delta : Bound := Bound);
         Append(~Z_pts, <pts, delta, bool>);
     end for;
     verified := &and[t[3] : t in Z_pts];
@@ -556,11 +525,8 @@ end function;
 
 // Provably computes rational points on a curve using two-cover descent and elliptic Chabauty.
 // Writes the output to the provided file name.
-procedure descent_procedure(C : SearchBound := 10000, AssumeGRH := false, OutputFile := "")
+procedure descent_procedure(C : SearchBound := 10000, AssumeGRH := true, OutputFile := "", Effort := 1)
     t_total := Time();
-    if AssumeGRH then
-        SetClassGroupBounds("GRH");
-    end if;
     if #OutputFile eq 0 then
         OutputFile := Sprintf("twocover-descent-output-%o.txt", Realtime());
     end if;
@@ -580,17 +546,26 @@ procedure descent_procedure(C : SearchBound := 10000, AssumeGRH := false, Output
     pts_search := [* PointSearch(Z, 10000) : Z in Zs *];
     fprintf OutputFile, "Results of initial point search:\n%o\n\n", pts_search;
     P1 := ProjectiveSpace(RationalField(), 1);
+    class_group_fields := [];
+    // We assume GRH to start, then (if AssumeGRH is false) make the computation unconditional at the end.
+    SetClassGroupBounds("GRH");
     for delta in twists do
         t0 := Time();
-        pts, bool := chabauty_on_twist(f, root, w, delta);
-        if bool then
-            if AssumeGRH then
-                verified := "yes (assuming GRH)";
-            else
-                verified := "yes";
-            end if;
+        pts, A, verified, cls := chabauty_on_twist(f, root, w, delta : Effort := Effort);
+        if IsEmpty(class_group_fields) and not IsEmpty(cls) then
+            // Record the field(s) and class number(s) to be verified later
+            class_group_fields := cls;
+        elif not IsEmpty(class_group_fields) and not IsEmpty(cls) then
+            // Make sure nothing's gone wrong and no new fields are popping up where they shouldn't
+            assert #class_group_fields eq #cls;
+            for c in cls do
+                assert &or[IsIsomorphic(cgf[1], c[1]) : cgf in class_group_fields];
+            end for;
+        end if;
+        if verified then
+            verified_str := "yes (assuming GRH)";
         else
-            verified := "no";
+            verified_str := "no";
         end if;
         pi := twisted_duplication_map(f, root, delta);
         x_coords := "";
@@ -598,14 +573,38 @@ procedure descent_procedure(C : SearchBound := 10000, AssumeGRH := false, Output
             x := P1!Eltseq(pi(Eltseq(P)));
             x_coords cat:= Sprintf("  pi(%o) = %o\n", P, x);
         end for;
+        if Type(A) eq GrpAb then
+            mw_string := Sprintf("%o", A);
+        else
+            mw_string := "[not computed]";
+        end if;
         fprintf OutputFile,
             "delta = %o\n" cat
             "Found rational points:\n%o\n" cat
             "Corresponding x-coordinates:\n%o" cat
             "List of points provably complete? %o\n" cat
+            (verified select "" else "Subgroup of ") cat
+            "Mordell-Weil group computed:\n%o\n" cat
             "Time: %o\n\n",
-            delta, pts, x_coords, verified, Time(t0);
+            delta, pts, x_coords, verified_str, mw_string, Time(t0);
     end for;
+    for cgf in class_group_fields do
+        F := cgf[1];
+        Cl := cgf[2];
+        fprintf OutputFile, "To remove dependence on GRH, need to verify that the number field with defining polynomial\n%o\n" cat
+            "has class number %o.\n", Parent(f)!DefiningPolynomial(F), #Cl;
+        if not AssumeGRH then
+            t0 := Time();
+            fprintf OutputFile, "Checking primes up to Minkowski bound %o...\n", MinkowskiBound(F);
+            Cl_actual := ClassGroup(F : Proof := "Full");
+            assert #Cl eq #Cl_actual;
+            fprintf OutputFile, "Verified in %o seconds.\n", Time(t0);
+        end if;
+    end for;
+    if not AssumeGRH then
+        fprintf OutputFile, "\nThe results depending on GRH have now been unconditionally proven.\n";
+    end if;
+    fprintf OutputFile, "\n";
     fprintf OutputFile, "Done.\nTotal time: %o\n", Time(t_total);
 end procedure;
 
