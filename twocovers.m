@@ -546,7 +546,7 @@ procedure descent_procedure(C : SearchBound := 10000, AssumeGRH := true, OutputF
     twists := Setseq(products_of_subsets(twist_param_generators(f)));
     fprintf OutputFile, "Twists:\n%o\n\n", twists;
     Zs := [genus5_canonical(f, root, delta) : delta in twists];
-    pts_search := [* PointSearch(Z, 10000) : Z in Zs *];
+    pts_search := [* PointSearch(Z, SearchBound) : Z in Zs *];
     fprintf OutputFile, "Results of initial point search:\n%o\n\n", pts_search;
     P1 := ProjectiveSpace(RationalField(), 1);
     class_group_fields := [];

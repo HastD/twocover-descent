@@ -1,11 +1,17 @@
-load "twocovers.m";
+load "../twocovers.m";
+load "g2c_curves-high-rank-disc100000.m";
 
 t_total := Time();
 
-C := HyperellipticCurve(); // TODO
+// Look up the coefficients of the curve with the given label (using the data loaded above)
+coeffs := data[Index(labels, LABEL)];
+// Create the curve with the given coefficients
+R := PolynomialRing(Rationals());
+C := HyperellipticCurve(R![c : c in coeffs[1]], R![c : c in coeffs[2]]);
+
 SearchBound := 10000;
 Effort := 1;
-OutputFile := LABEL * "-results.txt";
+OutputFile := "results/" * LABEL * "-results.txt";
 SetClassGroupBounds("GRH");
 
 fprintf OutputFile, "Curve:\n%o\n\n", C;
@@ -16,7 +22,7 @@ root := Roots(f)[1][1];
 twists := Setseq(products_of_subsets(twist_param_generators(f)));
 fprintf OutputFile, "Twists:\n%o\n\n", twists;
 Zs := [genus5_canonical(f, root, delta) : delta in twists];
-pts_search := [* PointSearch(Z, 10000) : Z in Zs *];
+pts_search := [* PointSearch(Z, SearchBound) : Z in Zs *];
 fprintf OutputFile, "Results of initial point search:\n%o\n\n", pts_search;
 P1 := ProjectiveSpace(RationalField(), 1);
 class_group_fields := [];
@@ -72,7 +78,7 @@ for delta in twists do
         "Time: %o\n\n",
         delta, g, pts, x_coords, verified_str, mw_string, Time(t0);
         if verified then
-            verified_twist_count :+= 1;
+            verified_twist_count +:= 1;
             break;
         end if;
     end for;

@@ -8,7 +8,7 @@ import os
 
 def run_curve(label):
     print("Starting {}...".format(label))
-    os.system("magma LABEL:={} runcurve.m".format(label))
+    os.system("magma -b LABEL:={} runcurve.m".format(label))
     print("Label {} complete.".format(label))
     return None
 
