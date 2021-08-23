@@ -17,6 +17,7 @@ Table of contents:
    * Section 4: Genus one quotients
    * Section 5: Searching for points on the curve
    * Section 6: Applying elliptic Chabauty to twists
+   * Section 7: Numerical computation of degree of isogeny
 */
 
 /*************************************************************
@@ -399,7 +400,7 @@ function curve_has_real_points(C : precision := 200)
 end function;
 
 // Test if the twist is locally solvable. If not, return a prime that fails.
-function is_genus5_locally_solvable(Z, bad_primes : Check := true, Skip := [], CheckReal := true)
+function is_genus5_locally_solvable(Z, bad_primes : Skip := [], CheckReal := true)
     // Need to check primes for which the Weil lower bound p+1-10*sqrt(p) is non-positive
     prime_threshold := 98;
     small_primes := PrimesUpTo(prime_threshold);
@@ -407,7 +408,11 @@ function is_genus5_locally_solvable(Z, bad_primes : Check := true, Skip := [], C
     large_bad_primes := [p : p in bad_primes | p gt prime_threshold];
     // Create a singular plane model for Z by projecting away from a point twice
     Z_planar := Curve(Projection(Projection(Z)));
-    if Check then
+    if Genus(Z_planar) ne 5 then
+        // in the rare event we get unlucky with the first projection
+        Z_space := Projection(Z, Ambient(Z)![0, 1, 0, 0, 0]);
+        Z_planar := Curve(Projection(Z_space, Ambient(Z_space)![0, 1, 1, 0]));
+        // check just in case we get unlucky twice
         assert Genus(Z_planar) eq 5;
     end if;
     for p in small_primes cat large_bad_primes do
@@ -435,7 +440,8 @@ function two_selmer_class_groups(E)
     p := HyperellipticPolynomials(E);
     A := AbsoluteAlgebra(quo< Parent(p) | p >);
     Cl := [ClassGroup(F : Proof := "GRH") : F in Components(A)];
-    return [<A[i], Cl[i]> : i in [1 .. #Cl]];
+    cls := [<A[i], Cl[i]> : i in [1 .. #Cl]];
+    return [c : c in cls | Degree(c[1]) gt 1];
 end function;
 
 // Run elliptic Chabauty to determine points of Z_delta.
@@ -489,11 +495,13 @@ function chabauty_on_twist(f, root1, root2, delta : Effort := 1, Bound := 10000,
     // Compute the Mordell-Weil group, and record whether it was provably computed
     A, mw, bool_rank, bool_index := MordellWeilGroup(E : Effort := Effort);
     mw_map := map< A -> E | a :-> mw(a) >;
-    if TorsionFreeRank(A) lt Degree(MinimalPolynomial(root2)) then
+    if TorsionFreeRank(A) eq 0 and Degree(MinimalPolynomial(root2)) eq 1 then
+        V := Setseq(Set(A));
+    elif TorsionFreeRank(A) lt Degree(MinimalPolynomial(root2)) then
         // Run elliptic Chabauty and record the set of points and the index parameter R
         V, R := Chabauty(mw_map, Ecov);
     else // Rank is too high, give up and return any points found
-        return pts_Z, 0, false, [];
+        return pts_Z, A, false, [];
     end if;
     VD := [E1_to_D(E_to_E1(mw_map(pt))) : pt in V];
     preimages := [Pullback(phi, pt) : pt in VD];
@@ -535,11 +543,6 @@ procedure descent_procedure(C : SearchBound := 10000, AssumeGRH := true, OutputF
     f := HyperellipticPolynomials(C_even);
     fprintf OutputFile, "Model:\ny^2 = f(x) := %o\nChange of coordinates:\n%o\n\n", f, phi;
     root := Roots(f)[1][1];
-    g := f div (Parent(f).1 - root);
-    assert IsIrreducible(g);
-    K<w> := NumberField(g);
-    G, roots, data := GaloisGroup(g);
-    fprintf OutputFile, "Galois group of g(x) := f(x)/(%o) = %o:\n%o\n\n", Parent(f).1 - root, g, G;
     twists := Setseq(products_of_subsets(twist_param_generators(f)));
     fprintf OutputFile, "Twists:\n%o\n\n", twists;
     Zs := [genus5_canonical(f, root, delta) : delta in twists];
@@ -549,44 +552,60 @@ procedure descent_procedure(C : SearchBound := 10000, AssumeGRH := true, OutputF
     class_group_fields := [];
     // We assume GRH to start, then (if AssumeGRH is false) make the computation unconditional at the end.
     SetClassGroupBounds("GRH");
+
+    // We'll try using each factor of the quintic f/(x - root)
+    g_quintic := f div (Parent(f).1 - root);
+    gs := [fact[1] : fact in Factorization(g_quintic)];
     for delta in twists do
         t0 := Time();
-        pts, A, verified, cls := chabauty_on_twist(f, root, w, delta : Effort := Effort);
-        if IsEmpty(class_group_fields) and not IsEmpty(cls) then
-            // Record the field(s) and class number(s) to be verified later
-            class_group_fields := cls;
-        elif not IsEmpty(class_group_fields) and not IsEmpty(cls) then
-            // Make sure nothing's gone wrong and no new fields are popping up where they shouldn't
-            assert #class_group_fields eq #cls;
+        for g in gs do
+            if Degree(g) eq 1 then
+                K := RationalField();
+                w := Roots(g)[1][1];
+            else
+                K<w> := NumberField(g);
+            end if;
+            pts, A, verified, cls := chabauty_on_twist(f, root, w, delta : Effort := Effort);
+            // Record new fields and class numbers to be verified later
             for c in cls do
-                assert &or[IsIsomorphic(cgf[1], c[1]) : cgf in class_group_fields];
+                if not &or[IsIsomorphic(cgf[1], c[1]) : cgf in class_group_fields] then
+                    Append(~class_group_fields, c);
+                end if;
             end for;
-        end if;
-        if verified then
-            verified_str := "yes (assuming GRH)";
-        else
-            verified_str := "no";
-        end if;
-        pi := twisted_duplication_map(f, root, delta);
-        x_coords := "";
-        for P in pts do
-            x := P1!Eltseq(pi(Eltseq(P)));
-            x_coords cat:= Sprintf("  pi(%o) = %o\n", P, x);
+            if verified then
+                if IsEmpty(cls) then
+                    verified_str := "yes (unconditionally)";
+                else
+                    verified_str := "yes (assuming GRH)";
+                end if;
+            else
+                verified_str := "no";
+            end if;
+            pi := twisted_duplication_map(f, root, delta);
+            x_coords := "";
+            for P in pts do
+                x := P1!Eltseq(pi(Eltseq(P)));
+                x_coords cat:= Sprintf("  pi(%o) = %o\n", P, x);
+            end for;
+            if Type(A) eq GrpAb then
+                mw_string := Sprintf("%o", A);
+            else
+                mw_string := "[not computed]";
+            end if;
+            fprintf OutputFile,
+                "delta = %o\n" cat
+                "g = %o\n" cat
+                "Found rational points:\n%o\n" cat
+                "Corresponding x-coordinates:\n%o" cat
+                "List of points provably complete? %o\n" cat
+                (verified select "" else "Subgroup of ") cat
+                "Mordell-Weil group computed:\n%o\n" cat
+                "Time: %o\n\n",
+                delta, g, pts, x_coords, verified_str, mw_string, Time(t0);
+            if verified then
+                break;
+            end if;
         end for;
-        if Type(A) eq GrpAb then
-            mw_string := Sprintf("%o", A);
-        else
-            mw_string := "[not computed]";
-        end if;
-        fprintf OutputFile,
-            "delta = %o\n" cat
-            "Found rational points:\n%o\n" cat
-            "Corresponding x-coordinates:\n%o" cat
-            "List of points provably complete? %o\n" cat
-            (verified select "" else "Subgroup of ") cat
-            "Mordell-Weil group computed:\n%o\n" cat
-            "Time: %o\n\n",
-            delta, pts, x_coords, verified_str, mw_string, Time(t0);
     end for;
     for cgf in class_group_fields do
         F := cgf[1];
@@ -607,4 +626,80 @@ procedure descent_procedure(C : SearchBound := 10000, AssumeGRH := true, OutputF
     fprintf OutputFile, "\n";
     fprintf OutputFile, "Done.\nTotal time: %o\n", Time(t_total);
 end procedure;
+
+/*************************************************************
+  Section 7: Numerical computation of degree of isogeny
+ *************************************************************/
+
+function isogeny_degree_prep(roots : precision := 30)
+    assert #roots eq 6 and #Seqset(roots) eq 6;
+    root := roots[1];
+    other_roots := roots[2 .. 6];
+    QQ := Rationals();
+    CC := ComplexField(precision);
+    Rt<t> := PolynomialRing(QQ);
+    f := &*[(t - r) : r in roots];
+
+    // Algebraic parts of the computation (domain side)
+    Z := genus5_canonical(f, root, 1);
+    bool, pr := Genus5PlaneCurveModel(Z);
+    if bool then
+        C := Codomain(pr);
+    else
+        C, pr1 := Projection(Z);
+        C, pr2 := Projection(C);
+        pr := Expand(pr1 * pr2);
+    end if;
+    Qxy<x, y> := PolynomialRing(QQ, 2);
+    poly_S := Evaluate(DefiningEquation(C), [x, y, 1]);
+
+    // Algebraic computation (codomain side)
+    phis := [genus1_map(f, root, w, 1) : w in other_roots];
+    phis := [Expand(map< Z -> ZK | [ZK.i : i in [1..5]] > * phi) where ZK is Domain(phi) : phi in phis];
+    Ds := [Codomain(phi) : phi in phis];
+
+    // Construct the Riemann surface associated to Z
+    S := RiemannSurface(poly_S : Precision := precision);
+    // Construct the elliptic curves as Riemann surfaces
+    Es := [RiemannSurface(HyperellipticPolynomials(D), 2) : D in Ds];
+
+    return Z, C, S, Es, pr, phis;
+end function;
+
+function isogeny_degree_main(S, Es, bZ, pts_Z, pr, phis : precision := 30)
+    CC := ComplexField(precision);
+    bC := pr(bZ);
+    pts_C := [pr(P) : P in pts_Z];
+
+    bDs := [* phi(bZ) : phi in phis *];
+    pts_Ds := [* [phi(P) : P in pts_Z] : phi in phis *];
+
+    bS := S!Eltseq(bC);
+    pts_S := [S!Eltseq(P) : P in pts_C];
+    pts_J := [AbelJacobi(bS, P) : P in pts_S];
+    M_J := Matrix(CC, 5, 5, [Eltseq(v) : v in pts_J]);
+    // Assert that the points are linearly independent in the Jacobian (with plenty of room for numerical error)
+    assert Abs(Determinant(M_J)) ge 10^(-Floor(precision/3));
+
+    bEs := [* Es[i]!Eltseq(bDs[i]) : i in [1..5] *];
+    pts_Es := [* [Es[i]!Eltseq(P) : P in pts_Ds[i]] : i in [1..5] *];
+    pts_tori := [[AbelJacobi(bEs[i], P)[1][1] : P in pts_Es[i]] : i in [1..5]];
+    M_A := Matrix(CC, 5, 5, pts_tori);
+    assert Abs(Determinant(M_A)) ge 10^(-Floor(precision/3));
+
+    M := M_J * Transpose(M_A^(-1));
+    return M_J, M_A, M;
+end function;
+
+function isogeny_degree_computation(roots : bound := 100, precision := 30)
+    Z, C, S, Es, pr, phis := isogeny_degree_prep(roots : precision := precision);
+    pts_Z_search := [P : P in PointSearch(Z, bound) | IsNonsingular(C, pr(P))];
+    if #pts_Z_search lt 6 then
+        error "Too few points found on genus 5 curve; bound too low?";
+    end if;
+    bZ := pts_Z_search[1];
+    pts_Z := pts_Z_search[2 .. 6];
+    M_J, M_A, M := isogeny_degree_main(S, Es, bZ, pts_Z, pr, phis : precision := precision);
+    return M_J, M_A, M;
+end function;
 
