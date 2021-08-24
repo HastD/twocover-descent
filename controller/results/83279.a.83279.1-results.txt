@@ -1,0 +1,89 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + x*y = x^5 + 2*x^4 + 2*x + 1 over Rational Field
+
+Model:
+y^2 = f(x) := 4*R.1^6 + 8*R.1^5 + R.1^4 + 8*R.1^2 + 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.3
+$.1*$.3^2 + 2*$.2
+$.1
+and inverse
+$.3
+-1/2*$.1^2*$.3 + 1/2*$.2
+$.1
+
+Twists:
+[
+-4*X^5 - 8*X^4 - X^3 + X^2 - 7*X - 4,
+-X - 1,
+1,
+4*X^5 + 8*X^4 - 2*X^2 + 7*X + 4
+]
+
+Results of initial point search:
+[*
+[ (1 : 0 : 0 : 0 : 0), (3/2 : -1 : 0 : 0 : 1) ],
+[ (0 : -2/9 : 4/9 : -2/3 : 1) ],
+[ (0 : 0 : 0 : 0 : 1) ],
+[ (2/9 : -1/3 : 4/9 : -2/3 : 1), (5/4 : -1 : 1 : -1 : 1) ]
+*]
+
+delta = -4*X^5 - 8*X^4 - X^3 + X^2 - 7*X - 4
+g = t^5 + 2*t^4 + 1/4*t^3 + 2*t + 1
+Found rational points:
+{ (1 : 0 : 0 : 0 : 0), (3/2 : -1 : 0 : 0 : 1) }
+Corresponding x-coordinates:
+  pi((1 : 0 : 0 : 0 : 0)) = (-1 : 1)
+  pi((3/2 : -1 : 0 : 0 : 1)) = (-13/12 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z
+Defined on 3 generators (free)
+Time: 180.120
+
+delta = -X - 1
+g = t^5 + 2*t^4 + 1/4*t^3 + 2*t + 1
+Found rational points:
+{ (0 : -2/9 : 4/9 : -2/3 : 1) }
+Corresponding x-coordinates:
+  pi((0 : -2/9 : 4/9 : -2/3 : 1)) = (1 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z
+Defined on 3 generators (free)
+Time: 2020.890
+
+delta = 1
+g = t^5 + 2*t^4 + 1/4*t^3 + 2*t + 1
+Found rational points:
+{ (0 : 0 : 0 : 0 : 1) }
+Corresponding x-coordinates:
+  pi((0 : 0 : 0 : 0 : 1)) = (0 : 1)
+List of points provably complete? no
+Subgroup of Mordell-Weil group computed:
+Abelian Group isomorphic to Z
+Defined on 1 generator (free)
+Time: 294.660
+
+delta = 4*X^5 + 8*X^4 - 2*X^2 + 7*X + 4
+g = t^5 + 2*t^4 + 1/4*t^3 + 2*t + 1
+Found rational points:
+{ (5/4 : -1 : 1 : -1 : 1), (2/9 : -1/3 : 4/9 : -2/3 : 1) }
+Corresponding x-coordinates:
+  pi((5/4 : -1 : 1 : -1 : 1)) = (1 : 0)
+  pi((2/9 : -1/3 : 4/9 : -2/3 : 1)) = (-4/7 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z
+Defined on 3 generators (free)
+Time: 255.610
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 + 3*t^14 + 9*t^13 + 145*t^12 + 580*t^11 + 2104*t^10 + 7834*t^9 + 28378*t^8 + 72428*t^7 + 60524*t^6 - 193220*t^5 - 601240*t^4 - 488960*t^3 - 6985552*t^2 + 2179052*t - 5812204
+has class number 4.
+
+FAILURE
+Done.
+Total time: 2753.600

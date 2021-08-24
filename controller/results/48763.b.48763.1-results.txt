@@ -1,0 +1,66 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + y = x^5 - 4*x^4 + 3*x^3 + 2*x^2 over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 + 8*R.1^4 + 12*R.1^3 - 16*R.1^2 + 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.3
+2*$.2 + $.3^3
+$.1
+and inverse
+$.3
+-1/2*$.1^3 + 1/2*$.2
+$.1
+
+Twists:
+[
+1/2*X^5 + 4*X^3 + 7*X^2 - 17/2*X + 2,
+X^5 + 8*X^3 + 12*X^2 - 17*X + 4,
+1,
+-X + 1/2
+]
+
+Results of initial point search:
+[*
+[ (20 : 37/4 : 17/4 : 2 : 1), (1 : 0 : 0 : 0 : 0), (225/8 : 13 : 6 : 3 : 1) ],
+[ (9/2 : 2 : 1 : 0 : 0), (1 : 0 : 0 : 0 : 0) ],
+[ (0 : 0 : 0 : 0 : 1) ],
+[]
+*]
+
+delta = 1/2*X^5 + 4*X^3 + 7*X^2 - 17/2*X + 2
+g = t^5 + 8*t^3 + 12*t^2 - 16*t + 4
+Found rational points:
+[ (20 : 37/4 : 17/4 : 2 : 1), (1 : 0 : 0 : 0 : 0), (225/8 : 13 : 6 : 3 : 1) ]
+Corresponding x-coordinates:
+  pi((20 : 37/4 : 17/4 : 2 : 1)) = (12 : 1)
+  pi((1 : 0 : 0 : 0 : 0)) = (1/2 : 1)
+  pi((225/8 : 13 : 6 : 3 : 1)) = (3/2 : 1)
+List of points provably complete? no
+Subgroup of Mordell-Weil group computed:
+Abelian Group isomorphic to Z (5 copies)
+Defined on 5 generators (free)
+Time: 399.090
+
+delta = X^5 + 8*X^3 + 12*X^2 - 17*X + 4
+g = t^5 + 8*t^3 + 12*t^2 - 16*t + 4
+Found rational points:
+{ (9/2 : 2 : 1 : 0 : 0), (1 : 0 : 0 : 0 : 0) }
+Corresponding x-coordinates:
+  pi((9/2 : 2 : 1 : 0 : 0)) = (1 : 1)
+  pi((1 : 0 : 0 : 0 : 0)) = (1 : 0)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 405.780
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 + 6*t^14 + 28*t^13 + 41*t^12 - 6*t^11 - 150*t^10 - 180*t^9 - 274*t^8 - 1220*t^7 - 3778*t^6 - 6746*t^5 - 8062*t^4 - 7003*t^3 - 4150*t^2 - 1282*t - 149
+has class number 1.
+
+FAILURE
+Done.
+Total time: 990.530

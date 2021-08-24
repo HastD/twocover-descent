@@ -1,0 +1,64 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + (x^3)*y = -3*x^4 - x^3 + 10*x^2 + 5*x - 6 over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 - 12*R.1^4 - 4*R.1^3 + 40*R.1^2 + 20*R.1 - 24
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.1
+$.1^3 + 2*$.2
+$.3
+and inverse
+$.1
+-1/2*$.1^3 + 1/2*$.2
+$.3
+
+Twists:
+[
+-X^5 + 2*X^4 + 7*X^3 - 15*X^2 - 15*X + 18,
+X^5 - 2*X^4 - 8*X^3 + 12*X^2 + 15*X - 14,
+1,
+X^2 + X - 3
+]
+
+Results of initial point search:
+[*
+[ (1/18 : -7/66 : 5/22 : -5/11 : 1) ],
+[ (1/32 : -1/16 : 3/16 : -3/8 : 1) ],
+[ (0 : 1/8 : 1/8 : 3/4 : 1), (0 : -1/8 : 1/8 : -1/4 : 1), (0 : 0 : 0 : 0 : 1) ],
+[]
+*]
+
+delta = -X^5 + 2*X^4 + 7*X^3 - 15*X^2 - 15*X + 18
+g = t^5 - 2*t^4 - 8*t^3 + 12*t^2 + 16*t - 12
+Found rational points:
+{ (1/18 : -7/66 : 5/22 : -5/11 : 1) }
+Corresponding x-coordinates:
+  pi((1/18 : -7/66 : 5/22 : -5/11 : 1)) = (2 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z + Z
+Defined on 4 generators (free)
+Time: 4720.240
+
+delta = X^5 - 2*X^4 - 8*X^3 + 12*X^2 + 15*X - 14
+g = t^5 - 2*t^4 - 8*t^3 + 12*t^2 + 16*t - 12
+Found rational points:
+{ (1/16 : -1/8 : 1/4 : -1/2 : 1), (1/32 : -1/16 : 3/16 : -3/8 : 1) }
+Corresponding x-coordinates:
+  pi((1/16 : -1/8 : 1/4 : -1/2 : 1)) = (1 : 0)
+  pi((1/32 : -1/16 : 3/16 : -3/8 : 1)) = (3 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 134.190
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 - 3*t^14 - 60*t^13 + 166*t^12 + 1245*t^11 - 3249*t^10 - 11904*t^9 + 28594*t^8 + 58058*t^7 - 116382*t^6 - 159068*t^5 + 206412*t^4 + 251348*t^3 - 110208*t^2 - 173040*t - 39428
+has class number 2.
+
+FAILURE
+Done.
+Total time: 9852.630

@@ -1,0 +1,51 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + (x^2 + 1)*y = x^5 + 3*x^4 + x^3 - 4*x^2 - x over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 - 4*R.1^5 - 14*R.1^4 + 4*R.1^3 + 13*R.1^2 + 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.3
+$.1^2*$.3 + 2*$.2 + $.3^3
+$.1
+and inverse
+$.3
+-1/2*$.1^3 - 1/2*$.1*$.3^2 + 1/2*$.2
+$.1
+
+Twists:
+[
+X^5 - 4*X^4 - 14*X^3 + 4*X^2 + 12*X + 4,
+-1/2*X^5 + 2*X^4 + 7*X^3 - X^2 - 6*X - 2,
+1,
+-X - 1/2
+]
+
+Results of initial point search:
+[*
+[ (1 : 0 : 0 : 0 : 0) ],
+[ (1 : 0 : 0 : 0 : 0) ],
+[ (4 : -2 : 1 : 0 : 1), (0 : 0 : 0 : 0 : 1) ],
+[]
+*]
+
+delta = X^5 - 4*X^4 - 14*X^3 + 4*X^2 + 12*X + 4
+g = t^5 - 4*t^4 - 14*t^3 + 4*t^2 + 13*t + 4
+Found rational points:
+{ (1 : 0 : 0 : 0 : 0) }
+Corresponding x-coordinates:
+  pi((1 : 0 : 0 : 0 : 0)) = (1 : 0)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 527.640
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 - 6*t^14 - 108*t^13 + 200*t^12 + 4664*t^11 + 8324*t^10 - 49844*t^9 - 214344*t^8 - 164656*t^7 + 613808*t^6 + 1616168*t^5 + 1530456*t^4 + 524956*t^3 - 52120*t^2 - 41664*t + 2360
+has class number 1.
+
+FAILURE
+Done.
+Total time: 1597.090

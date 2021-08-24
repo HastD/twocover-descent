@@ -1,0 +1,52 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + y = x^5 - x^4 - 5*x^3 - 3*x^2 over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 - 12*R.1^4 - 20*R.1^3 - 4*R.1^2 + 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.3
+2*$.2 + $.3^3
+$.1
+and inverse
+$.3
+-1/2*$.1^3 + 1/2*$.2
+$.1
+
+Twists:
+[
+X^5 - 12*X^3 - 20*X^2 - 5*X + 4,
+-X^5 + 12*X^3 + 21*X^2 + 5*X - 4,
+-4*X^5 + 47*X^3 + 79*X^2 + 16*X - 16,
+1
+]
+
+Results of initial point search:
+[*
+[ (0 : -1/2 : 1/2 : -1 : 1), (1 : 0 : 0 : 0 : 0) ],
+[ (1 : 0 : 0 : 0 : 0) ],
+[ (-1/8 : -1/4 : 1/4 : -1/2 : 1) ],
+[ (1 : -1 : 1 : 0 : 0), (0 : 0 : 0 : 0 : 1) ]
+*]
+
+delta = X^5 - 12*X^3 - 20*X^2 - 5*X + 4
+g = t^5 - 12*t^3 - 20*t^2 - 4*t + 4
+Found rational points:
+{ (0 : -1/2 : 1/2 : -1 : 1), (1 : 0 : 0 : 0 : 0) }
+Corresponding x-coordinates:
+  pi((0 : -1/2 : 1/2 : -1 : 1)) = (-4/3 : 1)
+  pi((1 : 0 : 0 : 0 : 0)) = (1 : 0)
+List of points provably complete? no
+Subgroup of Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 155.430
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 - 3*t^14 - 51*t^13 - 83*t^12 + 1049*t^11 + 3577*t^10 + 5809*t^9 - 10079*t^8 - 58133*t^7 - 157369*t^6 - 266425*t^5 - 339225*t^4 - 319245*t^3 - 224205*t^2 - 113853*t - 29293
+has class number 2.
+
+FAILURE
+Done.
+Total time: 418.580

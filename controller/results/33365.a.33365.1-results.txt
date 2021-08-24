@@ -1,0 +1,87 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + (x^3 + x)*y = -x^4 + 2*x^2 - x over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 - 2*R.1^4 + 9*R.1^2 - 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.1
+$.1^3 + $.1*$.3^2 + 2*$.2
+$.3
+and inverse
+$.1
+-1/2*$.1^3 - 1/2*$.1*$.3^2 + 1/2*$.2
+$.3
+
+Twists:
+[
+X^5 - 2*X^3 + X^2 + 8*X - 4,
+-X + 1,
+1,
+X^5 - 2*X^3 + 8*X - 4
+]
+
+Results of initial point search:
+[*
+[ (1 : 0 : 0 : 0 : 0) ],
+[],
+[ (0 : 0 : 1 : 0 : 1), (-1/2 : -1/2 : 0 : -1/2 : 1), (0 : 0 : 0 : 0 : 1) ],
+[ (1 : 0 : 0 : 0 : 0) ]
+*]
+
+delta = X^5 - 2*X^3 + X^2 + 8*X - 4
+g = t^5 - 2*t^3 + 9*t - 4
+Found rational points:
+{ (1 : 0 : 0 : 0 : 0) }
+Corresponding x-coordinates:
+  pi((1 : 0 : 0 : 0 : 0)) = (1 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 95.690
+
+delta = -X + 1
+g = t^5 - 2*t^3 + 9*t - 4
+Found rational points:
+{}
+Corresponding x-coordinates:
+List of points provably complete? yes (unconditionally)
+Mordell-Weil group computed:
+[not computed]
+Time: 5.240
+
+delta = 1
+g = t^5 - 2*t^3 + 9*t - 4
+Found rational points:
+{ (0 : 0 : 1 : 0 : 1), (-1/2 : -1/2 : 0 : -1/2 : 1), (0 : 0 : 0 : 0 : 1) }
+Corresponding x-coordinates:
+  pi((0 : 0 : 1 : 0 : 1)) = (1/2 : 1)
+  pi((-1/2 : -1/2 : 0 : -1/2 : 1)) = (5 : 1)
+  pi((0 : 0 : 0 : 0 : 1)) = (0 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z + Z
+Defined on 4 generators (free)
+Time: 211.010
+
+delta = X^5 - 2*X^3 + 8*X - 4
+g = t^5 - 2*t^3 + 9*t - 4
+Found rational points:
+{ (1 : 0 : 0 : 0 : 0) }
+Corresponding x-coordinates:
+  pi((1 : 0 : 0 : 0 : 0)) = (1 : 0)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z
+Defined on 3 generators (free)
+Time: 199.220
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 + 6*t^14 + 30*t^13 + 188*t^12 + 719*t^11 + 2380*t^10 + 8548*t^9 + 22726*t^8 + 48671*t^7 + 102938*t^6 + 172042*t^5 + 139476*t^4 - 67111*t^3 - 187036*t^2 - 95104*t - 11038
+has class number 1.
+
+SUCCESS
+Done.
+Total time: 513.600

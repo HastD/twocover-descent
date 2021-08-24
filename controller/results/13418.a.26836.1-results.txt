@@ -1,0 +1,76 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + (x + 1)*y = -x^5 + x^3 + 2*x^2 + x over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 + 6*R.1^5 + 9*R.1^4 + 4*R.1^3 - 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.3
+$.1*$.3^2 + 2*$.2 + $.3^3
+$.1
+and inverse
+$.3
+-1/2*$.1^3 - 1/2*$.1^2*$.3 + 1/2*$.2
+$.1
+
+Twists:
+[
+-X^5 - 6*X^4 - 9*X^3 - 3*X^2 + X + 4,
+-X - 1,
+X^5 + 6*X^4 + 9*X^3 + 4*X^2 - X - 4,
+1
+]
+
+Results of initial point search:
+[*
+[ (1 : 0 : 0 : 0 : 0) ],
+[ (1/9 : -1/9 : 1/9 : -1/3 : 1) ],
+[ (1 : 0 : 0 : 0 : 0), (0 : 0 : 1 : -1 : 1) ],
+[ (-1/7 : 1/7 : -1/7 : -1/7 : 1), (-1/23 : -3/23 : -1/23 : -1/23 : 1), (0 : 0 : 0 : 0 : 1) ]
+*]
+
+delta = -X^5 - 6*X^4 - 9*X^3 - 3*X^2 + X + 4
+g = t^5 + 6*t^4 + 9*t^3 + 4*t^2 - 4
+Found rational points:
+{ (1 : 0 : 0 : 0 : 0) }
+Corresponding x-coordinates:
+  pi((1 : 0 : 0 : 0 : 0)) = (-1 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 80.550
+
+delta = -X - 1
+g = t^5 + 6*t^4 + 9*t^3 + 4*t^2 - 4
+Found rational points:
+{ (1/9 : -1/9 : 1/9 : -1/3 : 1) }
+Corresponding x-coordinates:
+  pi((1/9 : -1/9 : 1/9 : -1/3 : 1)) = (1 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z
+Defined on 3 generators (free)
+Time: 114.090
+
+delta = X^5 + 6*X^4 + 9*X^3 + 4*X^2 - X - 4
+g = t^5 + 6*t^4 + 9*t^3 + 4*t^2 - 4
+Found rational points:
+{ (1 : 0 : 0 : 0 : 0), (0 : 0 : 1 : -1 : 1) }
+Corresponding x-coordinates:
+  pi((1 : 0 : 0 : 0 : 0)) = (1 : 0)
+  pi((0 : 0 : 1 : -1 : 1)) = (-4 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z
+Defined on 3 generators (free)
+Time: 115.790
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 + 6*t^14 - 7*t^13 - 8*t^12 + 281*t^11 + 558*t^10 + 633*t^9 + 2742*t^8 + 8152*t^7 + 21554*t^6 + 43444*t^5 + 48176*t^4 + 28658*t^3 + 10908*t^2 + 2088*t + 216
+has class number 2.
+
+FAILURE
+Done.
+Total time: 496.510

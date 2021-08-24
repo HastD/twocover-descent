@@ -1,0 +1,52 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + (x^3 + 1)*y = x^5 + x^4 - x^2 - x over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 + 4*R.1^5 + 4*R.1^4 + 2*R.1^3 - 4*R.1^2 - 4*R.1 + 1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.1
+$.1^3 + 2*$.2 + $.3^3
+$.3
+and inverse
+$.1
+-1/2*$.1^3 + 1/2*$.2 - 1/2*$.3^3
+$.3
+
+Twists:
+[
+X^5 + 3*X^4 + X^3 + 2*X^2 - 4*X + 1,
+X^5 + 3*X^4 + X^3 + X^2 - 6*X,
+1,
+-X
+]
+
+Results of initial point search:
+[*
+[ (3/7 : 1/7 : -1/7 : -3/7 : 1), (1 : -1 : 1 : -1 : 1) ],
+[ (1 : -1 : 1 : -1 : 1) ],
+[ (0 : 0 : 0 : 0 : 1) ],
+[ (2 : 1 : 0 : 0 : 1), (-1/2 : 0 : 0 : -1/2 : 1) ]
+*]
+
+delta = X^5 + 3*X^4 + X^3 + 2*X^2 - 4*X + 1
+g = t^5 + 3*t^4 + t^3 + t^2 - 5*t + 1
+Found rational points:
+{ (3/7 : 1/7 : -1/7 : -3/7 : 1), (1 : -1 : 1 : -1 : 1) }
+Corresponding x-coordinates:
+  pi((3/7 : 1/7 : -1/7 : -3/7 : 1)) = (-1/2 : 1)
+  pi((1 : -1 : 1 : -1 : 1)) = (0 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 55.360
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 + 3*t^14 + 21*t^13 + 61*t^12 + 129*t^11 + 381*t^10 + 268*t^9 + 862*t^8 + 975*t^7 + 905*t^6 + 4069*t^5 - 1039*t^4 + 4143*t^3 + 8631*t^2 - 1350*t + 2804
+has class number 1.
+
+FAILURE
+Done.
+Total time: 125.960

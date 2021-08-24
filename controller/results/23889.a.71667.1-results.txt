@@ -1,0 +1,63 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + (x^3 + x^2 + x + 1)*y = -x^4 - 4*x^3 + x over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 + 2*R.1^5 - R.1^4 - 12*R.1^3 + 3*R.1^2 + 6*R.1 + 1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.1
+$.1^3 + $.1^2*$.3 + $.1*$.3^2 + 2*$.2 + $.3^3
+$.3
+and inverse
+$.1
+-1/2*$.1^3 - 1/2*$.1^2*$.3 - 1/2*$.1*$.3^2 + 1/2*$.2 - 1/2*$.3^3
+$.3
+
+Twists:
+[
+-X^5 - 3*X^4 - 2*X^3 + 11*X^2 + 6*X + 1,
+1,
+X^5 + 3*X^4 + 2*X^3 - 10*X^2 - 8*X,
+-X
+]
+
+Results of initial point search:
+[*
+[ (1 : 1 : 1 : 1 : 1) ],
+[ (0 : 0 : 0 : 0 : 1) ],
+[ (1 : 1 : 1 : 1 : 1) ],
+[ (-1 : 0 : 0 : -1 : 1), (-3 : 1 : 0 : 0 : 1) ]
+*]
+
+delta = -X^5 - 3*X^4 - 2*X^3 + 11*X^2 + 6*X + 1
+g = t^5 + 3*t^4 + 2*t^3 - 10*t^2 - 7*t - 1
+Found rational points:
+{ (1 : 1 : 1 : 1 : 1) }
+Corresponding x-coordinates:
+  pi((1 : 1 : 1 : 1 : 1)) = (0 : 1)
+List of points provably complete? no
+Subgroup of Mordell-Weil group computed:
+Abelian Group isomorphic to Z
+Defined on 1 generator (free)
+Time: 86.640
+
+delta = 1
+g = t^5 + 3*t^4 + 2*t^3 - 10*t^2 - 7*t - 1
+Found rational points:
+{ (0 : 0 : 0 : 0 : 1) }
+Corresponding x-coordinates:
+  pi((0 : 0 : 0 : 0 : 1)) = (1 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z
+Defined on 1 generator (free)
+Time: 47.260
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 + 3*t^14 - 23*t^13 - 21*t^12 + 229*t^11 + 3*t^10 - 1787*t^9 + 3203*t^8 + 3147*t^7 - 22071*t^6 + 42187*t^5 - 39071*t^4 + 4023*t^3 + 34945*t^2 - 40209*t + 16441
+has class number 2.
+
+FAILURE
+Done.
+Total time: 182.810

@@ -1,0 +1,87 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + (x + 1)*y = x^5 - 3*x^4 + 5*x^3 - 4*x^2 + x over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 + 6*R.1^5 - 15*R.1^4 + 20*R.1^3 - 12*R.1^2 + 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.3
+$.1*$.3^2 + 2*$.2 + $.3^3
+$.1
+and inverse
+$.3
+-1/2*$.1^3 - 1/2*$.1^2*$.3 + 1/2*$.2
+$.1
+
+Twists:
+[
+X^2 - X + 1,
+X^2 - X + 1/2,
+1,
+X^4 - 2*X^3 + 5/2*X^2 - 3/2*X + 1/2
+]
+
+Results of initial point search:
+[*
+[ (-1 : -3/2 : -1 : 0 : 1), (1 : -1/2 : -1 : 0 : 1) ],
+[],
+[ (0 : 0 : 0 : 0 : 1) ],
+[ (-5 : 0 : 3 : 3 : 1), (-3 : 0 : 1 : 1 : 1) ]
+*]
+
+delta = X^2 - X + 1
+g = t^5 + 6*t^4 - 15*t^3 + 20*t^2 - 12*t + 4
+Found rational points:
+{ (-1 : -3/2 : -1 : 0 : 1), (1 : -1/2 : -1 : 0 : 1) }
+Corresponding x-coordinates:
+  pi((-1 : -3/2 : -1 : 0 : 1)) = (1/2 : 1)
+  pi((1 : -1/2 : -1 : 0 : 1)) = (9/10 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z + Z
+Defined on 4 generators (free)
+Time: 431.920
+
+delta = X^2 - X + 1/2
+g = t^5 + 6*t^4 - 15*t^3 + 20*t^2 - 12*t + 4
+Found rational points:
+{}
+Corresponding x-coordinates:
+List of points provably complete? yes (unconditionally)
+Mordell-Weil group computed:
+[not computed]
+Time: 1.370
+
+delta = 1
+g = t^5 + 6*t^4 - 15*t^3 + 20*t^2 - 12*t + 4
+Found rational points:
+{ (0 : 0 : 0 : 0 : 1) }
+Corresponding x-coordinates:
+  pi((0 : 0 : 0 : 0 : 1)) = (0 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 53.840
+
+delta = X^4 - 2*X^3 + 5/2*X^2 - 3/2*X + 1/2
+g = t^5 + 6*t^4 - 15*t^3 + 20*t^2 - 12*t + 4
+Found rational points:
+{ (-5 : 0 : 3 : 3 : 1), (-3 : 0 : 1 : 1 : 1) }
+Corresponding x-coordinates:
+  pi((-5 : 0 : 3 : 3 : 1)) = (1 : 1)
+  pi((-3 : 0 : 1 : 1 : 1)) = (1 : 0)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z + Z
+Defined on 4 generators (free)
+Time: 148.880
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 - 3*t^14 - 33*t^13 + 147*t^12 + 36*t^11 - 1522*t^10 + 8392*t^9 - 34176*t^8 + 85100*t^7 - 130356*t^6 + 141616*t^5 - 163632*t^4 + 250080*t^3 - 256544*t^2 + 126720*t - 23104
+has class number 2.
+
+SUCCESS
+Done.
+Total time: 637.910

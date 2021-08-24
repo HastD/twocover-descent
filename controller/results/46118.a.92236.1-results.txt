@@ -1,0 +1,86 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + (x^3 + 1)*y = -x^4 + x^3 + 2*x^2 - x - 1 over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 - 4*R.1^4 + 6*R.1^3 + 8*R.1^2 - 4*R.1 - 3
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.1
+$.1^3 + 2*$.2 + $.3^3
+$.3
+and inverse
+$.1
+-1/2*$.1^3 + 1/2*$.2 - 1/2*$.3^3
+$.3
+
+Twists:
+[
+16*X^5 - 16*X^4 - 49*X^3 + 143*X^2 - 15*X - 47,
+X^5 - X^4 - 3*X^3 + 9*X^2 - 2*X - 4,
+1,
+2*X^5 - 2*X^4 - 6*X^3 + 19*X^2 - 2*X - 7
+]
+
+Results of initial point search:
+[*
+[ (5/21 : 1/7 : 5/21 : 1/7 : 1) ],
+[ (1 : -1 : 1 : -1 : 1) ],
+[ (0 : 0 : 0 : 0 : 1) ],
+[ (1 : -1 : 1 : -1 : 1), (-1/3 : -1 : -1/3 : 1/3 : 1) ]
+*]
+
+delta = 16*X^5 - 16*X^4 - 49*X^3 + 143*X^2 - 15*X - 47
+g = t^5 - t^4 - 3*t^3 + 9*t^2 - t - 3
+Found rational points:
+{}
+Corresponding x-coordinates:
+List of points provably complete? no
+Subgroup of Mordell-Weil group computed:
+Abelian Group of order 1
+Time: 51.850
+
+delta = X^5 - X^4 - 3*X^3 + 9*X^2 - 2*X - 4
+g = t^5 - t^4 - 3*t^3 + 9*t^2 - t - 3
+Found rational points:
+{ (1 : -1 : 1 : -1 : 1) }
+Corresponding x-coordinates:
+  pi((1 : -1 : 1 : -1 : 1)) = (1 : 0)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 86.080
+
+delta = 1
+g = t^5 - t^4 - 3*t^3 + 9*t^2 - t - 3
+Found rational points:
+{ (0 : 0 : 0 : 0 : 1) }
+Corresponding x-coordinates:
+  pi((0 : 0 : 0 : 0 : 1)) = (-1 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 73.790
+
+delta = 2*X^5 - 2*X^4 - 6*X^3 + 19*X^2 - 2*X - 7
+g = t^5 - t^4 - 3*t^3 + 9*t^2 - t - 3
+Found rational points:
+{ (1 : -1 : 1 : -1 : 1), (-1/3 : -1 : -1/3 : 1/3 : 1) }
+Corresponding x-coordinates:
+  pi((1 : -1 : 1 : -1 : 1)) = (1 : 1)
+  pi((-1/3 : -1 : -1/3 : 1/3 : 1)) = (-3 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 81.490
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 - 3*t^14 - 36*t^13 + 108*t^12 + 489*t^11 - 915*t^10 - 3495*t^9 - 2389*t^8 + 27722*t^7 - 14676*t^6 - 26337*t^5 + 89665*t^4 + 111736*t^3 - 51362*t^2 - 106160*t - 32444
+has class number 1.
+
+FAILURE
+Done.
+Total time: 295.880

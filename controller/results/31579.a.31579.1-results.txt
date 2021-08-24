@@ -1,0 +1,87 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + y = x^5 - 3*x^3 - 2*x^2 over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 - 8*R.1^4 - 12*R.1^3 + 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.3
+2*$.2 + $.3^3
+$.1
+and inverse
+$.3
+-1/2*$.1^3 + 1/2*$.2
+$.1
+
+Twists:
+[
+X^5 - 8*X^3 - 12*X^2 - X + 4,
+-4*X^5 + 31*X^3 + 47*X^2 - 16,
+1,
+-X^5 + 8*X^3 + 13*X^2 + X - 4
+]
+
+Results of initial point search:
+[*
+[ (1 : 0 : 0 : 0 : 0) ],
+[],
+[ (1 : -1 : 1 : 0 : 0), (0 : 0 : 0 : 0 : 1) ],
+[ (1 : 0 : 0 : 0 : 0), (-1 : 1 : -1/2 : 0 : 1) ]
+*]
+
+delta = X^5 - 8*X^3 - 12*X^2 - X + 4
+g = t^5 - 8*t^3 - 12*t^2 + 4
+Found rational points:
+{ (1 : 0 : 0 : 0 : 0) }
+Corresponding x-coordinates:
+  pi((1 : 0 : 0 : 0 : 0)) = (1 : 0)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z
+Defined on 3 generators (free)
+Time: 184.010
+
+delta = -4*X^5 + 31*X^3 + 47*X^2 - 16
+g = t^5 - 8*t^3 - 12*t^2 + 4
+Found rational points:
+{}
+Corresponding x-coordinates:
+List of points provably complete? yes (unconditionally)
+Mordell-Weil group computed:
+[not computed]
+Time: 1.780
+
+delta = 1
+g = t^5 - 8*t^3 - 12*t^2 + 4
+Found rational points:
+{ (1 : -1 : 1 : 0 : 0), (0 : 0 : 0 : 0 : 1) }
+Corresponding x-coordinates:
+  pi((1 : -1 : 1 : 0 : 0)) = (1/2 : 1)
+  pi((0 : 0 : 0 : 0 : 1)) = (0 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 403.970
+
+delta = -X^5 + 8*X^3 + 13*X^2 + X - 4
+g = t^5 - 8*t^3 - 12*t^2 + 4
+Found rational points:
+{ (1 : 0 : 0 : 0 : 0), (-1 : 1 : -1/2 : 0 : 1) }
+Corresponding x-coordinates:
+  pi((1 : 0 : 0 : 0 : 0)) = (-1 : 1)
+  pi((-1 : 1 : -1/2 : 0 : 1)) = (4 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z
+Defined on 3 generators (free)
+Time: 180.830
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 - 9*t^14 - 15*t^13 + 295*t^12 + 45*t^11 - 5201*t^10 + 5897*t^9 + 32971*t^8 - 46805*t^7 - 153275*t^6 + 491371*t^5 - 643579*t^4 + 562231*t^3 - 376563*t^2 + 163579*t - 30935
+has class number 2.
+
+SUCCESS
+Done.
+Total time: 772.610

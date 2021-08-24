@@ -1,0 +1,86 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + x*y = x^6 - x^5 + 2*x^4 - 2*x^3 + x^2 - x over Rational Field
+
+Model:
+y^2 = f(x) := 4*R.1^6 - 4*R.1^5 + 8*R.1^4 - 8*R.1^3 + 5*R.1^2 - 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.1
+$.1*$.3^2 + 2*$.2
+$.3
+and inverse
+$.1
+-1/2*$.1*$.3^2 + 1/2*$.2
+$.3
+
+Twists:
+[
+X^2 + 1,
+4*X^5 - 4*X^4 + 8*X^3 - 8*X^2 + 4*X - 4,
+4*X^5 - 4*X^4 + 7*X^3 - 8*X^2 + 4*X - 4,
+1
+]
+
+Results of initial point search:
+[*
+[ (1/2 : 0 : -1 : -1/2 : 1) ],
+[ (1 : 0 : 0 : 0 : 0) ],
+[],
+[ (1 : 0 : -1 : 0 : 1), (0 : 0 : 0 : 0 : 1) ]
+*]
+
+delta = X^2 + 1
+g = t^5 - t^4 + 2*t^3 - 2*t^2 + 5/4*t - 1
+Found rational points:
+{ (1/2 : 0 : -1 : -1/2 : 1) }
+Corresponding x-coordinates:
+  pi((1/2 : 0 : -1 : -1/2 : 1)) = (-1/3 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z
+Defined on 3 generators (free)
+Time: 367.360
+
+delta = 4*X^5 - 4*X^4 + 8*X^3 - 8*X^2 + 4*X - 4
+g = t^5 - t^4 + 2*t^3 - 2*t^2 + 5/4*t - 1
+Found rational points:
+{ (1 : 0 : 0 : 0 : 0) }
+Corresponding x-coordinates:
+  pi((1 : 0 : 0 : 0 : 0)) = (1 : 0)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 99.740
+
+delta = 4*X^5 - 4*X^4 + 7*X^3 - 8*X^2 + 4*X - 4
+g = t^5 - t^4 + 2*t^3 - 2*t^2 + 5/4*t - 1
+Found rational points:
+{}
+Corresponding x-coordinates:
+List of points provably complete? yes (unconditionally)
+Mordell-Weil group computed:
+[not computed]
+Time: 4.870
+
+delta = 1
+g = t^5 - t^4 + 2*t^3 - 2*t^2 + 5/4*t - 1
+Found rational points:
+{ (1 : 0 : -1 : 0 : 1), (0 : 0 : 0 : 0 : 1) }
+Corresponding x-coordinates:
+  pi((1 : 0 : -1 : 0 : 1)) = (1 : 1)
+  pi((0 : 0 : 0 : 0 : 1)) = (0 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z
+Defined on 3 generators (free)
+Time: 123.010
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 - 6*t^14 + 54*t^13 - 200*t^12 + 1143*t^11 - 3234*t^10 + 14096*t^9 - 30468*t^8 + 102591*t^7 - 154946*t^6 + 353214*t^5 - 277512*t^4 - 34967*t^3 + 497322*t^2 - 2768724*t + 2330868
+has class number 2.
+
+SUCCESS
+Done.
+Total time: 597.380

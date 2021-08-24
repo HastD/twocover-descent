@@ -1,0 +1,49 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + (x^2 + 1)*y = x^5 - 3*x^4 - x^3 + 3*x^2 + 3*x over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 + 12*R.1^5 + 14*R.1^4 - 4*R.1^3 - 11*R.1^2 + 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.3
+$.1^2*$.3 + 2*$.2 + $.3^3
+$.1
+and inverse
+$.3
+-1/2*$.1^3 - 1/2*$.1*$.3^2 + 1/2*$.2
+$.1
+
+Twists:
+[
+1/2*X^5 + 6*X^4 + 7*X^3 - X^2 - 6*X + 2,
+1,
+X^5 + 12*X^4 + 14*X^3 - 4*X^2 - 12*X + 4,
+-X + 1/2
+]
+
+Results of initial point search:
+[*
+[ (1 : 0 : 0 : 0 : 0) ],
+[ (4/3 : 2/3 : 1/3 : 0 : 1), (0 : 0 : 0 : 0 : 1) ],
+[ (1 : 0 : 0 : 0 : 0), (-61/2 : -15 : -7 : -3 : 1) ],
+[]
+*]
+
+delta = 1/2*X^5 + 6*X^4 + 7*X^3 - X^2 - 6*X + 2
+g = t^5 + 12*t^4 + 14*t^3 - 4*t^2 - 11*t + 4
+Found rational points:
+{}
+Corresponding x-coordinates:
+List of points provably complete? no
+Subgroup of Mordell-Weil group computed:
+Abelian Group of order 1
+Time: 121.120
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 + 6*t^14 - 18*t^13 - 188*t^12 - 161*t^11 + 1462*t^10 + 3252*t^9 + 2780*t^8 + 1471*t^7 - 39014*t^6 - 158146*t^5 - 50428*t^4 - 2303*t^3 + 373674*t^2 + 279760*t + 177788
+has class number 1.
+
+FAILURE
+Done.
+Total time: 843.510

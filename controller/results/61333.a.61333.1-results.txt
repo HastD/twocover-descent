@@ -1,0 +1,86 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + (x^3)*y = -4*x^4 - 6*x^3 + 3*x^2 + 5*x - 2 over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 - 16*R.1^4 - 24*R.1^3 + 12*R.1^2 + 20*R.1 - 8
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.1
+$.1^3 + 2*$.2
+$.3
+and inverse
+$.1
+-1/2*$.1^3 + 1/2*$.2
+$.3
+
+Twists:
+[
+X^5 - 2*X^4 - 13*X^3 - 3*X^2 + 11*X - 2,
+X^5 - 2*X^4 - 12*X^3 + 11*X - 6,
+1,
+X^2 + X - 1
+]
+
+Results of initial point search:
+[*
+[],
+[ (1/12 : 0 : 1/6 : -1/3 : 1), (1/16 : -1/8 : 1/4 : -1/2 : 1), (-1/72 : -1/12 : 1/6 : -4/9 : 1) ],
+[ (1/2 : 0 : 1/2 : -1 : 1), (0 : 0 : 0 : 0 : 1) ],
+[]
+*]
+
+delta = X^5 - 2*X^4 - 13*X^3 - 3*X^2 + 11*X - 2
+g = t^5 - 2*t^4 - 12*t^3 + 12*t - 4
+Found rational points:
+{}
+Corresponding x-coordinates:
+List of points provably complete? yes (unconditionally)
+Mordell-Weil group computed:
+[not computed]
+Time: 10.290
+
+delta = X^5 - 2*X^4 - 12*X^3 + 11*X - 6
+g = t^5 - 2*t^4 - 12*t^3 + 12*t - 4
+Found rational points:
+{ (1/12 : 0 : 1/6 : -1/3 : 1), (1/16 : -1/8 : 1/4 : -1/2 : 1), (-1/72 : -1/12 : 1/6 : -4/9 : 1) }
+Corresponding x-coordinates:
+  pi((1/12 : 0 : 1/6 : -1/3 : 1)) = (-3 : 1)
+  pi((1/16 : -1/8 : 1/4 : -1/2 : 1)) = (1 : 0)
+  pi((-1/72 : -1/12 : 1/6 : -4/9 : 1)) = (25/4 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z
+Defined on 3 generators (free)
+Time: 245.380
+
+delta = 1
+g = t^5 - 2*t^4 - 12*t^3 + 12*t - 4
+Found rational points:
+{ (1/2 : 0 : 1/2 : -1 : 1), (0 : 0 : 0 : 0 : 1) }
+Corresponding x-coordinates:
+  pi((1/2 : 0 : 1/2 : -1 : 1)) = (-3/2 : 1)
+  pi((0 : 0 : 0 : 0 : 1)) = (-2 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z + Z
+Defined on 4 generators (free)
+Time: 395.840
+
+delta = X^2 + X - 1
+g = t^5 - 2*t^4 - 12*t^3 + 12*t - 4
+Found rational points:
+{}
+Corresponding x-coordinates:
+List of points provably complete? yes (unconditionally)
+Mordell-Weil group computed:
+[not computed]
+Time: 3.600
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 - 3*t^14 - 118*t^13 + 314*t^12 + 4877*t^11 - 9775*t^10 - 90878*t^9 + 73400*t^8 + 869680*t^7 + 485268*t^6 - 3132614*t^5 - 6043280*t^4 - 4298008*t^3 - 1392936*t^2 - 202196*t - 10348
+has class number 2.
+
+SUCCESS
+Done.
+Total time: 659.020

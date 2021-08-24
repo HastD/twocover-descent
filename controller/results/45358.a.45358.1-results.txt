@@ -1,0 +1,87 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + (x + 1)*y = -x^5 - 6*x^4 - 9*x^3 + x over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 + 6*R.1^5 + R.1^4 - 36*R.1^3 - 24*R.1^2 - 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.3
+$.1*$.3^2 + 2*$.2 + $.3^3
+$.1
+and inverse
+$.3
+-1/2*$.1^3 - 1/2*$.1^2*$.3 + 1/2*$.2
+$.1
+
+Twists:
+[
+X^2 + 4*X + 1,
+1,
+X^5 + 6*X^4 + X^3 - 36*X^2 - 25*X - 4,
+X^5 + 6*X^4 - 40*X^2 - 25*X - 4
+]
+
+Results of initial point search:
+[*
+[ (1 : -3/13 : 1/13 : -3/13 : 1), (19/5 : -19/15 : 7/15 : -1/3 : 1), (-27 : 9 : -3 : 1 : 1), (1/3 : -1/9 : 1/9 : -1/3 : 1) ],
+[ (0 : 0 : 0 : 0 : 1) ],
+[ (1 : 0 : 0 : 0 : 0) ],
+[]
+*]
+
+delta = X^2 + 4*X + 1
+g = t^5 + 6*t^4 + t^3 - 36*t^2 - 24*t - 4
+Found rational points:
+[ (1 : -3/13 : 1/13 : -3/13 : 1), (19/5 : -19/15 : 7/15 : -1/3 : 1), (-27 : 9 : -3 : 1 : 1), (1/3 : -1/9 : 1/9 : -1/3 : 1) ]
+Corresponding x-coordinates:
+  pi((1 : -3/13 : 1/13 : -3/13 : 1)) = (-12 : 1)
+  pi((19/5 : -19/15 : 7/15 : -1/3 : 1)) = (-17/2 : 1)
+  pi((-27 : 9 : -3 : 1 : 1)) = (-4 : 1)
+  pi((1/3 : -1/9 : 1/9 : -1/3 : 1)) = (-1/2 : 1)
+List of points provably complete? no
+Subgroup of Mordell-Weil group computed:
+Abelian Group isomorphic to Z (5 copies)
+Defined on 5 generators (free)
+Time: 1531.140
+
+delta = 1
+g = t^5 + 6*t^4 + t^3 - 36*t^2 - 24*t - 4
+Found rational points:
+{ (0 : 0 : 0 : 0 : 1) }
+Corresponding x-coordinates:
+  pi((0 : 0 : 0 : 0 : 1)) = (0 : 1)
+List of points provably complete? no
+Subgroup of Mordell-Weil group computed:
+Abelian Group of order 1
+Time: 339.190
+
+delta = X^5 + 6*X^4 + X^3 - 36*X^2 - 25*X - 4
+g = t^5 + 6*t^4 + t^3 - 36*t^2 - 24*t - 4
+Found rational points:
+{ (1 : 0 : 0 : 0 : 0) }
+Corresponding x-coordinates:
+  pi((1 : 0 : 0 : 0 : 0)) = (1 : 0)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z
+Defined on 3 generators (free)
+Time: 731.160
+
+delta = X^5 + 6*X^4 - 40*X^2 - 25*X - 4
+g = t^5 + 6*t^4 + t^3 - 36*t^2 - 24*t - 4
+Found rational points:
+{}
+Corresponding x-coordinates:
+List of points provably complete? yes (unconditionally)
+Mordell-Weil group computed:
+[not computed]
+Time: 3.420
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 + 6*t^14 + 18*t^13 + 82*t^12 + 207*t^11 + 230*t^10 + 886*t^9 + 718*t^8 - 4049*t^7 - 738*t^6 - 1362*t^5 - 14750*t^4 - 3327*t^3 + 109646*t^2 + 141214*t - 60362
+has class number 4.
+
+FAILURE
+Done.
+Total time: 2607.110

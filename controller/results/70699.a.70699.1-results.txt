@@ -1,0 +1,86 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + y = x^5 + 4*x^4 + 2*x^3 - 2*x^2 - x over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 - 4*R.1^5 - 8*R.1^4 + 8*R.1^3 + 16*R.1^2 + 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.3
+2*$.2 + $.3^3
+$.1
+and inverse
+$.3
+-1/2*$.1^3 + 1/2*$.2
+$.1
+
+Twists:
+[
+-X^5 + 4*X^4 + 8*X^3 - 7*X^2 - 15*X - 4,
+X^5 - 4*X^4 - 8*X^3 + 8*X^2 + 15*X + 4,
+1,
+-4*X^5 + 16*X^4 + 31*X^3 - 33*X^2 - 64*X - 16
+]
+
+Results of initial point search:
+[*
+[ (1 : 0 : 0 : 0 : 0) ],
+[ (-1/4 : 0 : 1/4 : 0 : 1), (1 : 0 : 0 : 0 : 0), (-1/4 : 1/2 : -1/2 : 1 : 0) ],
+[ (0 : 0 : 0 : 0 : 1) ],
+[ (-1/4 : -1/4 : 1/2 : -3/4 : 1) ]
+*]
+
+delta = -X^5 + 4*X^4 + 8*X^3 - 7*X^2 - 15*X - 4
+g = t^5 - 4*t^4 - 8*t^3 + 8*t^2 + 16*t + 4
+Found rational points:
+{ (1 : 0 : 0 : 0 : 0) }
+Corresponding x-coordinates:
+  pi((1 : 0 : 0 : 0 : 0)) = (-1 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 99.290
+
+delta = X^5 - 4*X^4 - 8*X^3 + 8*X^2 + 15*X + 4
+g = t^5 - 4*t^4 - 8*t^3 + 8*t^2 + 16*t + 4
+Found rational points:
+{ (-1/4 : 0 : 1/4 : 0 : 1), (1 : 0 : 0 : 0 : 0), (-1/4 : 1/2 : -1/2 : 1 : 0) }
+Corresponding x-coordinates:
+  pi((-1/4 : 0 : 1/4 : 0 : 1)) = (-8/7 : 1)
+  pi((1 : 0 : 0 : 0 : 0)) = (1 : 0)
+  pi((-1/4 : 1/2 : -1/2 : 1 : 0)) = (-1/3 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z + Z
+Defined on 4 generators (free)
+Time: 430.030
+
+delta = 1
+g = t^5 - 4*t^4 - 8*t^3 + 8*t^2 + 16*t + 4
+Found rational points:
+{ (0 : 0 : 0 : 0 : 1) }
+Corresponding x-coordinates:
+  pi((0 : 0 : 0 : 0 : 1)) = (0 : 1)
+List of points provably complete? no
+Subgroup of Mordell-Weil group computed:
+Abelian Group of order 1
+Time: 206.280
+
+delta = -4*X^5 + 16*X^4 + 31*X^3 - 33*X^2 - 64*X - 16
+g = t^5 - 4*t^4 - 8*t^3 + 8*t^2 + 16*t + 4
+Found rational points:
+{}
+Corresponding x-coordinates:
+List of points provably complete? no
+Subgroup of Mordell-Weil group computed:
+Abelian Group of order 1
+Time: 63.940
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 - 10*t^14 + 62*t^13 - 189*t^12 + 724*t^11 - 1746*t^10 + 3900*t^9 - 13226*t^8 - 62108*t^7 - 149982*t^6 - 219466*t^5 - 407546*t^4 - 334735*t^3 + 104864*t^2 - 29706*t + 4799
+has class number 6.
+
+FAILURE
+Done.
+Total time: 802.360

@@ -1,0 +1,64 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + (x + 1)*y = -x^5 - 3*x^4 - 4*x^3 - x^2 over Rational Field
+
+Model:
+y^2 = f(x) := R.1^6 + 2*R.1^5 - 3*R.1^4 - 16*R.1^3 - 12*R.1^2 - 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.3
+$.1*$.3^2 + 2*$.2 + $.3^3
+$.1
+and inverse
+$.3
+-1/2*$.1^3 - 1/2*$.1^2*$.3 + 1/2*$.2
+$.1
+
+Twists:
+[
+X^5 + 2*X^4 - 3*X^3 - 16*X^2 - 13*X - 4,
+4*X^5 + 8*X^4 - 13*X^3 - 65*X^2 - 48*X - 16,
+1,
+-X^5 - 2*X^4 + 3*X^3 + 17*X^2 + 13*X + 4
+]
+
+Results of initial point search:
+[*
+[ (-2/3 : 0 : 1/3 : -1 : 1), (1 : 0 : 0 : 0 : 0) ],
+[ (0 : -1/3 : 1/3 : -1/3 : 1) ],
+[ (-1/3 : 1/3 : -1/3 : -1/3 : 1), (0 : 0 : 0 : 0 : 1) ],
+[ (-8/13 : -3/13 : 5/13 : -3/13 : 1), (1 : 0 : 0 : 0 : 0) ]
+*]
+
+delta = X^5 + 2*X^4 - 3*X^3 - 16*X^2 - 13*X - 4
+g = t^5 + 2*t^4 - 3*t^3 - 16*t^2 - 12*t - 4
+Found rational points:
+{ (-2/3 : 0 : 1/3 : -1 : 1), (1 : 0 : 0 : 0 : 0) }
+Corresponding x-coordinates:
+  pi((-2/3 : 0 : 1/3 : -1 : 1)) = (-12/13 : 1)
+  pi((1 : 0 : 0 : 0 : 0)) = (1 : 0)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z + Z
+Defined on 3 generators (free)
+Time: 109.170
+
+delta = 4*X^5 + 8*X^4 - 13*X^3 - 65*X^2 - 48*X - 16
+g = t^5 + 2*t^4 - 3*t^3 - 16*t^2 - 12*t - 4
+Found rational points:
+{ (0 : -1/3 : 1/3 : -1/3 : 1) }
+Corresponding x-coordinates:
+  pi((0 : -1/3 : 1/3 : -1/3 : 1)) = (-1/3 : 1)
+List of points provably complete? no
+Subgroup of Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 169.320
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 + 6*t^14 - 36*t^13 - 218*t^12 + 243*t^11 + 1382*t^10 + 1320*t^9 + 17062*t^8 - 6981*t^7 - 146870*t^6 - 13084*t^5 - 305450*t^4 - 164167*t^3 + 2243954*t^2 - 2634820*t + 965926
+has class number 1.
+
+FAILURE
+Done.
+Total time: 865.250

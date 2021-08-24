@@ -1,0 +1,85 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + (x^2)*y = x^5 - 3*x^3 + x^2 + 2*x - 1 over Rational Field
+
+Model:
+y^2 = f(x) := -4*R.1^6 + 8*R.1^5 + 4*R.1^4 - 12*R.1^3 + R.1^2 + 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.3
+$.1^2*$.3 + 2*$.2
+$.1
+and inverse
+$.3
+-1/2*$.1*$.3^2 + 1/2*$.2
+$.1
+
+Twists:
+[
+-4*X^5 + 8*X^4 + 4*X^3 - 11*X^2 + 4,
+4*X^5 - 7*X^4 - 5*X^3 + 11*X^2 - 4,
+X^2 - 1,
+1
+]
+
+Results of initial point search:
+[*
+[ (1 : 0 : 0 : 0 : 0) ],
+[ (3/4 : 1 : 1 : 1 : 1) ],
+[ (14/9 : 20/9 : 10/9 : 13/9 : 1) ],
+[ (0 : 0 : 0 : 0 : 1) ]
+*]
+
+delta = -4*X^5 + 8*X^4 + 4*X^3 - 11*X^2 + 4
+g = t^5 - 2*t^4 - t^3 + 3*t^2 - 1/4*t - 1
+Found rational points:
+{ (1 : 0 : 0 : 0 : 0) }
+Corresponding x-coordinates:
+  pi((1 : 0 : 0 : 0 : 0)) = (1 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 91.430
+
+delta = 4*X^5 - 7*X^4 - 5*X^3 + 11*X^2 - 4
+g = t^5 - 2*t^4 - t^3 + 3*t^2 - 1/4*t - 1
+Found rational points:
+{ (3/4 : 1 : 1 : 1 : 1) }
+Corresponding x-coordinates:
+  pi((3/4 : 1 : 1 : 1 : 1)) = (-1 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 70.780
+
+delta = X^2 - 1
+g = t^5 - 2*t^4 - t^3 + 3*t^2 - 1/4*t - 1
+Found rational points:
+{}
+Corresponding x-coordinates:
+List of points provably complete? no
+Subgroup of Mordell-Weil group computed:
+Abelian Group of order 1
+Time: 56.070
+
+delta = 1
+g = t^5 - 2*t^4 - t^3 + 3*t^2 - 1/4*t - 1
+Found rational points:
+{ (0 : 0 : 0 : 0 : 1) }
+Corresponding x-coordinates:
+  pi((0 : 0 : 0 : 0 : 1)) = (0 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 81.210
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 - 3*t^14 + 9*t^13 + t^12 + 65*t^11 - 207*t^10 + 117*t^9 - 479*t^8 + 1455*t^7 - 2161*t^6 + 2079*t^5 - 2453*t^4 + 4941*t^3 - 4663*t^2 + 509*t + 725
+has class number 1.
+
+FAILURE
+Done.
+Total time: 302.040

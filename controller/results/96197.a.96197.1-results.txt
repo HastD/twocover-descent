@@ -1,0 +1,52 @@
+Curve:
+Hyperelliptic Curve defined by y^2 + x*y = x^5 - 9*x^3 - 11*x^2 - 2*x + 1 over Rational Field
+
+Model:
+y^2 = f(x) := 4*R.1^6 - 8*R.1^5 - 43*R.1^4 - 36*R.1^3 + 4*R.1
+Change of coordinates:
+Mapping from: CrvHyp: C to CrvHyp: C_even
+with equations : 
+$.3
+$.1*$.3^2 + 2*$.2
+$.1
+and inverse
+$.3
+-1/2*$.1^2*$.3 + 1/2*$.2
+$.1
+
+Twists:
+[
+-4*X^5 + 8*X^4 + 43*X^3 + 37*X^2 + X - 4,
+-X + 1/5,
+1,
+-4/5*X^5 + 8/5*X^4 + 38/5*X^3 + 32/5*X^2 + 1/5*X - 4/5
+]
+
+Results of initial point search:
+[*
+[ (21/50 : -13/25 : 16/25 : -4/5 : 1), (1 : 0 : 0 : 0 : 0) ],
+[ (818/1871 : -932/1871 : 1208/1871 : -1518/1871 : 1), (-34/3 : 52/21 : -8/3 : 22/21 : 1), (-29/88 : -39/88 : 21/44 : -29/44 : 1) ],
+[ (0 : 0 : 0 : 0 : 1) ],
+[ (21/50 : -13/25 : 16/25 : -4/5 : 1) ]
+*]
+
+delta = -4*X^5 + 8*X^4 + 43*X^3 + 37*X^2 + X - 4
+g = t^5 - 2*t^4 - 43/4*t^3 - 9*t^2 + 1
+Found rational points:
+{ (21/50 : -13/25 : 16/25 : -4/5 : 1), (1 : 0 : 0 : 0 : 0) }
+Corresponding x-coordinates:
+  pi((21/50 : -13/25 : 16/25 : -4/5 : 1)) = (1 : 0)
+  pi((1 : 0 : 0 : 0 : 0)) = (-1 : 1)
+List of points provably complete? yes (assuming GRH)
+Mordell-Weil group computed:
+Abelian Group isomorphic to Z + Z
+Defined on 2 generators (free)
+Time: 397.000
+
+To remove dependence on GRH, need to verify that the number field with defining polynomial
+t^15 - 6*t^14 + 39*t^13 - 66*t^12 - 113*t^11 + 2000*t^10 - 7031*t^9 + 12562*t^8 + 8172*t^7 - 102046*t^6 + 277384*t^5 - 332908*t^4 - 7884*t^3 + 1049912*t^2 - 1607176*t + 1831288
+has class number 4.
+
+FAILURE
+Done.
+Total time: 1209.840
