@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """This is a simple multi-process manager for running two-cover descent on many curves.
 The program maintains a queue of curves, starts processes for multiple curves at once,
 and monitors the processes for excess memory usage or overly long runtimes."""
@@ -121,7 +121,7 @@ LABELS = (
 
 def main():
     with ProcessPool(initializer=set_memory_limit, initargs=(MAX_MEM,), max_workers=MAX_WORKERS, max_tasks=MAX_TASKS) as pool:
-        future = pool.map(run_curve, TEST_LABELS, timeout=TIME_LIMIT)
+        future = pool.map(run_curve, LABELS, timeout=TIME_LIMIT)
         iterator = future.result()
         while True:
             try:
