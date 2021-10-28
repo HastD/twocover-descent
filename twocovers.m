@@ -434,6 +434,20 @@ function is_genus5_locally_solvable(Z, bad_primes : Skip := [], CheckReal := tru
     end if;
 end function;
 
+// Test if the twist is locally solvable at 2.
+function is_genus5_locally_solvable_at_2(Z)
+    // Create a singular plane model for Z by projecting away from a point twice
+    Z_planar := Curve(Projection(Projection(Z)));
+    if Genus(Z_planar) ne 5 then
+        // in the rare event we get unlucky with the first projection
+        Z_space := Projection(Z, Ambient(Z)![0, 1, 0, 0, 0]);
+        Z_planar := Curve(Projection(Z_space, Ambient(Z_space)![0, 1, 1, 0]));
+        // check just in case we get unlucky twice
+        assert Genus(Z_planar) eq 5;
+    end if;
+    return IsLocallySolvable(Z_planar, 2 : Smooth, AssumeIrreducible);
+end function;
+
 // Returns the fields and class groups needed for computing the 2-Selmer group, conditional on GRH.
 // Assumes E is given in the form y^2 = p(x).
 function two_selmer_class_groups(E)
@@ -442,6 +456,73 @@ function two_selmer_class_groups(E)
     Cl := [ClassGroup(F : Proof := "GRH") : F in Components(A)];
     cls := [<A[i], Cl[i]> : i in [1 .. #Cl]];
     return [c : c in cls | Degree(c[1]) gt 1];
+end function;
+
+function twist_MW(f, root, g, delta, base_pt : Effort := 1, AssumeGRH := true)
+    if AssumeGRH then
+        SetClassGroupBounds("GRH");
+    end if;
+    K<w> := NumberField(g);
+    phi := genus1_map(f, root / 1, w, delta);
+    ZK := Domain(phi);
+    D := Codomain(phi);
+    // Minimise and reduce D
+    D_min := Reduce(Minimise(GenusOneModel(D)));
+    D_min_hyp := HyperellipticCurve(D_min);
+    is_iso, min_map := IsIsomorphic(D, D_min_hyp);
+    assert is_iso;
+    E := Jacobian(D_min);
+    E1, j := EllipticCurve(D_min_hyp, min_map(phi(ZK!base_pt)));
+    E1_to_D := Inverse(j) * Inverse(min_map);
+    // This model of the Jacobian isn't optimal, so identify it with E for faster Mordell-Weil computations.
+    is_iso, E_to_E1 := IsIsomorphic(E, E1);
+    assert is_iso;
+    // Construct the map to P^1 for elliptic Chabauty
+    Ecov := E_to_E1 * E1_to_D * map< D -> ProjectiveSpace(Rationals(), 1) | [D.1, D.3] >;
+    // Compute the Mordell-Weil group, and record whether it was provably computed
+    A, mw, bool_rank, bool_index := MordellWeilGroup(E : Effort := Effort);
+    return A, mw, bool_rank, bool_index;
+end function;
+
+function twist_chabauty(f, root, g, delta, base_pt, MW_orders, MW_gens)
+    Z := genus5_canonical(f, root, delta);
+    if Degree(g) eq 1 then
+        K := RationalField();
+        w := Roots(g)[1][1];
+    else
+        K<w> := NumberField(g);
+    end if;
+    phi := genus1_map(f, root / 1, w, delta);
+    ZK := Domain(phi);
+    D := Codomain(phi);
+    // Minimise and reduce D
+    D_min := Reduce(Minimise(GenusOneModel(D)));
+    D_min_hyp := HyperellipticCurve(D_min);
+    is_iso, min_map := IsIsomorphic(D, D_min_hyp);
+    assert is_iso;
+    E := Jacobian(D_min);
+    E1, j := EllipticCurve(D_min_hyp, min_map(phi(ZK!base_pt)));
+    E1_to_D := Inverse(j) * Inverse(min_map);
+    // This model of the Jacobian isn't optimal, so identify it with E for faster Mordell-Weil computations.
+    is_iso, E_to_E1 := IsIsomorphic(E, E1);
+    assert is_iso;
+    // Construct the map to P^1 for elliptic Chabauty
+    Ecov := E_to_E1 * E1_to_D * map< D -> ProjectiveSpace(Rationals(), 1) | [D.1, D.3] >;
+    A := AbelianGroup(MW_orders);
+    gens := [E![K![a[1]/a[2] : a in c] : c in coords] : coords in MW_gens];
+    mw := map< A -> E(K) | a :-> &+[E(K) | e[i] * gens[i] : i in [1 .. #gens]] where e is Eltseq(a) >;
+    mw_map := map< A -> E | a :-> mw(a) >;
+    //mw_map := map< A -> E | a :-> &+[Eltseq(a)[i] * gens[i] : i in [1 .. #gens]] >;
+    if TorsionFreeRank(A) eq 0 and Degree(g) eq 1 then
+        V := Setseq(Set(A));
+    else
+        // Run elliptic Chabauty and record the set of points and the index parameter R
+        V, R := Chabauty(mw_map, Ecov);
+    end if;
+    VD := [E1_to_D(E_to_E1(mw_map(pt))) : pt in V];
+    preimages := [Pullback(phi, pt) : pt in VD];
+    rational_pts := &join[{Z!Eltseq(pt) : pt in Points(S) | IsCoercible(Z, Eltseq(pt))} : S in preimages];
+    return rational_pts;
 end function;
 
 // Run elliptic Chabauty to determine points of Z_delta.
