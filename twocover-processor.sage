@@ -26,6 +26,7 @@ Here's the JSON data scheme that this script produces:
             "g1": [
                 {
                     "g": [<int>], # list of coefficients of the corresponding factor of f
+                    "aInv": [[[<int>, <int>]]], # a-invariant data
                     "rank": <int>, # computed rank of MW group
                     "MW_proven": <bool>, # has the MW group been provably computed (conditional on GRH)?
                     "chabauty_possible": <bool>, # can we use elliptic Chabauty?
@@ -134,6 +135,7 @@ def twist_data(curve):
         "verified": False,
         "g1": [{
                 "g": g,
+                "aInv": None,
                 "rank": None,
                 "MW_proven": None,
                 "chabauty_possible": None,
@@ -201,6 +203,20 @@ def hasse_principle(curve):
             return False
     return True
 
+def get_aInv_data(curve, twist_index, g_index):
+    twist = curve["twists"][twist_index]
+    R.<x> = QQ[]
+    f = R(curve["coeffs"])
+    root = QQ(curve["root"])
+    delta = twist_from_coeffs(twist["coeffs"])
+    D = twist["g1"][g_index]
+    g = R(D["g"])
+    E = magma.function_call("twist_ell_curve", [f, root, g, delta])
+    aInvs = E.aInvariants()
+    aInv_arrays = [[QQ(c) for c in a.Eltseq()] for a in aInvs]
+    aInv_data = [[(int(c.numerator()), int(c.denominator())) for c in a] for a in aInv_arrays]
+    return aInv_data
+
 def MW_gens(mw, A):
     gens_mag = [magma("{}({})".format(mw.name(), a.name())) for a in A.gens()]
     gens = []
@@ -209,16 +225,22 @@ def MW_gens(mw, A):
         gens.append(coords)
     return gens
 
+def aInv_data_to_ell_curve(g, aInv_data):
+    aInv_arrays = [[ZZ(c[0]) / ZZ(c[1]) for c in a] for a in aInv_data]
+    K.<w> = NumberField(g)
+    aInvs = [K(a) for a in aInv_arrays]
+    E = EllipticCurve(aInvs)
+    return E
+
 def twist_MW_group(curve, twist_index, g_index):
     twist = curve["twists"][twist_index]
-    assert twist["base_pt"] is not None
     R.<x> = QQ[]
-    f = R(curve["coeffs"])
-    root = QQ(curve["root"])
-    delta = twist_from_coeffs(twist["coeffs"])
     D = twist["g1"][g_index]
     g = R(D["g"])
-    A, mw, bool_rank, bool_index = magma.function_call("twist_MW", [f, root, g, delta, twist["base_pt"]], nvals=4)
+    assert D["aInv"] is not None
+    E = aInv_data_to_ell_curve(g, D["aInv"])
+    magma.eval("SetClassGroupBounds(\"GRH\");")
+    A, mw, bool_rank, bool_index = magma.MordellWeilGroup(E, nvals=4)
     rank = int(magma.TorsionFreeRank(A))
     MW_proven = (bool_rank == bool_index == magma(True))
     orders = [int(gen.Order()) for gen in A.gens()]
@@ -343,6 +365,17 @@ try:
     if not curve["hasse_principle"]:
         curve["obstruction_found"] = True
     t = record_data(curve, OUTPUT_FILE, t)
+
+    # Compute a-invariants of the elliptic curve associated to each twist with found points
+    for i in range(len(curve["twists"])):
+        twist = curve["twists"][i]
+        if twist["base_pt"] is None:
+            continue
+        for j in range(len(curve["g"])):
+            D = twist["g1"][j]
+            if D["aInv"] is None:
+                D["aInv"] = get_aInv_data(curve, twist_index=i, g_index=j)
+                t = record_data(curve, OUTPUT_FILE, t)
 
     # Compute the Mordell-Weil group of each twist where we found a base point
     for i in range(len(curve["twists"])):

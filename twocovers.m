@@ -458,30 +458,15 @@ function two_selmer_class_groups(E)
     return [c : c in cls | Degree(c[1]) gt 1];
 end function;
 
-function twist_MW(f, root, g, delta, base_pt : Effort := 1, AssumeGRH := true)
-    if AssumeGRH then
-        SetClassGroupBounds("GRH");
-    end if;
+function twist_ell_curve(f, root, g, delta)
     K<w> := NumberField(g);
-    phi := genus1_map(f, root / 1, w, delta);
-    ZK := Domain(phi);
-    D := Codomain(phi);
+    A := ChangeRing(Parent(f), K);
+    h := A!f div ((A.1 - root) * (A.1 - w));
+    D := genus1_quotient(h, root, delta);
     // Minimise and reduce D
     D_min := Reduce(Minimise(GenusOneModel(D)));
-    D_min_hyp := HyperellipticCurve(D_min);
-    is_iso, min_map := IsIsomorphic(D, D_min_hyp);
-    assert is_iso;
     E := Jacobian(D_min);
-    E1, j := EllipticCurve(D_min_hyp, min_map(phi(ZK!base_pt)));
-    E1_to_D := Inverse(j) * Inverse(min_map);
-    // This model of the Jacobian isn't optimal, so identify it with E for faster Mordell-Weil computations.
-    is_iso, E_to_E1 := IsIsomorphic(E, E1);
-    assert is_iso;
-    // Construct the map to P^1 for elliptic Chabauty
-    Ecov := E_to_E1 * E1_to_D * map< D -> ProjectiveSpace(Rationals(), 1) | [D.1, D.3] >;
-    // Compute the Mordell-Weil group, and record whether it was provably computed
-    A, mw, bool_rank, bool_index := MordellWeilGroup(E : Effort := Effort);
-    return A, mw, bool_rank, bool_index;
+    return E;
 end function;
 
 function twist_chabauty(f, root, g, delta, base_pt, MW_orders, MW_gens)
