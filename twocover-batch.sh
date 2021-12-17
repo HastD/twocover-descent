@@ -17,5 +17,8 @@
 # Use the SGE_TASK_ID environment variable to select the appropriate input file from bash array
 # Bash array index starts from 0, so we need to subtract one from SGE_TASK_ID value
 
-sage ./twocover-processor.sage --index $(($SGE_TASK_ID-1))
+module load sagemath/9.3
+module load magma_usyd/2.26-9
+
+sage --python ./twocover-processor.sage.py --index $(($SGE_TASK_ID-1)) --output_directory /projectnb/arithgeo/drhast/twocover-results --stages setup
 
