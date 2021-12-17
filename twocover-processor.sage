@@ -328,6 +328,8 @@ try:
     with open(OUTPUT_FILE, "r") as f:
         curve = json.load(f)
 except FileNotFoundError:
+    if "setup" not in STAGES:
+        raise ValueError("Missing data file and no setup stage.")
     with open(DATA_FILE, "r") as database:
         curve_database = json.load(database)
     # Build the basic data structure recording information about the curve
@@ -345,7 +347,7 @@ try:
             curve["twists"] = twist_data(curve)
             curve["stage"] = "setup"
             t = record_data(curve, OUTPUT_FILE, t)
-    elif "search" in STAGES:
+    if "search" in STAGES:
         # Search for points on each twist, and choose a base point
         for i in range(len(curve["twists"])):
             found_pts, base_pt = twist_point_search(curve, twist_index=i, bound=SEARCH_BOUND)
@@ -353,7 +355,7 @@ try:
             curve["twists"][i]["base_pt"] = base_pt
             curve["stage"] = "search"
             t = record_data(curve, OUTPUT_FILE, t)
-    elif "locsolv" in STAGES:
+    if "locsolv" in STAGES:
         # Test whether the twists are locally solvable
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
@@ -375,7 +377,7 @@ try:
         curve["stage"] = "locsolv"
         t = record_data(curve, OUTPUT_FILE, t)
 
-    elif "aInv" in STAGES:
+    if "aInv" in STAGES:
         # Compute a-invariants of the elliptic curve associated to each twist with found points
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
@@ -389,7 +391,7 @@ try:
         curve["stage"] = "aInv"
         t = record_data(curve, OUTPUT_FILE, t)
 
-    elif "MW" in STAGES:
+    if "MW" in STAGES:
         # Compute the Mordell-Weil group of each twist where we found a base point
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
@@ -411,7 +413,7 @@ try:
         curve["stage"] = "MW"
         t = record_data(curve, OUTPUT_FILE, t)
 
-    elif "Chabauty" in STAGES:
+    if "Chabauty" in STAGES:
         # Run elliptic Chabauty on the twists, where possible
         memory_error = False
         for i in range(len(curve["twists"])):
