@@ -16,7 +16,7 @@ Here's the JSON data scheme that this script produces:
     "obstruction_found": <bool>, # have we found an obstruction to the algorithm completing?
     "twists": [
         {
-            "coeffs": [[<int>]], # list of the coefficients of the twist parameter, as (numerator, denominator) ordered pairs
+            "coeffs": [str], # list of the coefficients of the twist parameter in the form "num/denom"
             "found_pts": <int>, # number of points that have been found
             "base_pt": [<int>], # chosen base point of the twist
             "loc_solv": <bool>, # is the twist locally solvable?
@@ -26,18 +26,19 @@ Here's the JSON data scheme that this script produces:
             "g1": [
                 {
                     "g": [<int>], # list of coefficients of the corresponding factor of f
-                    "aInv": [[[<int>, <int>]]], # a-invariant data
+                    "aInv": [[str]], # a-invariant data (the strings are in the form "num/denom")
                     "rank": <int>, # computed rank of MW group
                     "MW_proven": <bool>, # has the MW group been provably computed (conditional on GRH)?
                     "chabauty_possible": <bool>, # can we use elliptic Chabauty?
                     "chabauty_memory_error": <bool>, # has a memory error occurred while running elliptic Chabauty?
                     "MW_orders": [<int>], # orders of generators of MW group
-                    "gens": [[[[<int>]]]] # generators of MW group
+                    "gens": [[[str]]] # generators of MW group (str in the form "num/denom")
                 }
             ]
         }
     ],
     "hasse_principle": <bool>, # do the curve's twists all appear to satisfy the Hasse principle?
+    "stage": <str>, # last stage of the computation that was run
     "runtime": <float>, # estimated runtime in seconds taken so far to compute this data
     "exception": False # did an unhandled exception occur?
 }
@@ -54,6 +55,8 @@ label_group.add_argument("--index", type=int, help="the index of the LMFDB label
 label_group.add_argument("--label", help="the LMFDB label of the curve to process")
 parser.add_argument("--database", help="the database file to read from", default="data/g2c_curves-r2-w1.json")
 parser.add_argument("--label_list", help="the list of labels the index is based on", default="data/labels.json")
+parser.add_argument("--output_directory", help="directory for output files", default="./results")
+parser.add_argument("--stages", help="comma-separated list from: 'setup', 'search', 'locsolv', 'aInv', 'MW', or 'Chabauty'")
 args = parser.parse_args()
 
 if args.label is not None:
@@ -66,16 +69,19 @@ else:
     raise ValueError("Must provide a label or label index.")
 
 DATA_FILE = args.database
-HALT_ON_OBSTRUCTION = True # stop immediately if obstruction found?
+HALT_ON_OBSTRUCTION = False # stop immediately if obstruction found?
+STAGES = frozenset(args.stages.split(","))
+if not STAGES.issubset({"setup", "search", "locsolv", "aInv", "MW", "Chabauty"}):
+    raise ValueError("Invalid stage label.")
 
 magma.load("twocovers.m")
 
-# limit memory usage to 2 GB
-MEMORY_LIMIT = 2 * 1024 * 1024 * 1024
+# limit memory usage to 5 GB
+MEMORY_LIMIT = 5 * 1024 * 1024 * 1024
 resource.setrlimit(resource.RLIMIT_AS, (MEMORY_LIMIT, MEMORY_LIMIT))
 resource.setrlimit(resource.RLIMIT_RSS, (MEMORY_LIMIT, MEMORY_LIMIT))
 
-OUTPUT_FILE = "results/curve-{}.json".format(LABEL)
+OUTPUT_FILE = "{}/curve-{}.json".format(args.output_directory, LABEL)
 SEARCH_BOUND = 10000
 
 def integral_proj_pt(P):
@@ -109,6 +115,7 @@ def build_curve_data(label, poly_coeffs):
         "hasse_principle": None,
         "obstruction_found": False,
         "twists": None,
+        "stage": None,
         "runtime": 0,
         "exception": False
     }
@@ -118,7 +125,7 @@ def twist_coeffs(curve):
     f = R(curve["coeffs"])
     gens = magma.function_call("twist_param_generators", f)
     twists = list(magma.function_call("products_of_subsets", gens))
-    return [[(int(ZZ(magma.Numerator(c))), int(ZZ(magma.Denominator(c)))) for c in magma.Eltseq(d)] for d in twists]
+    return [[str(QQ(c)) for c in magma.Eltseq(d)] for d in twists]
 
 def twist_data(curve):
     if curve["twists"] is not None:
@@ -146,7 +153,7 @@ def twist_data(curve):
 
 def twist_from_coeffs(coeff_data):
     R.<x> = QQ[]
-    return R([c[0] / c[1] for c in coeff_data])
+    return R([QQ(c) for c in coeff_data])
 
 def twist_point_search(curve, twist_index, bound=SEARCH_BOUND):
     R.<x> = QQ[]
@@ -213,20 +220,18 @@ def get_aInv_data(curve, twist_index, g_index):
     g = R(D["g"])
     E = magma.function_call("twist_ell_curve", [f, root, g, delta])
     aInvs = E.aInvariants()
-    aInv_arrays = [[QQ(c) for c in a.Eltseq()] for a in aInvs]
-    aInv_data = [[(int(c.numerator()), int(c.denominator())) for c in a] for a in aInv_arrays]
-    return aInv_data
+    return [[str(QQ(c)) for c in a.Eltseq()] for a in aInvs]
 
 def MW_gens(mw, A):
     gens_mag = [magma("{}({})".format(mw.name(), a.name())) for a in A.gens()]
     gens = []
     for P in gens_mag:
-        coords = [[[int(ZZ(c.Numerator())), int(ZZ(c.Denominator()))] for c in a.Eltseq()] for a in P.Eltseq()]
+        coords = [[str(QQ(c)) for c in a.Eltseq()] for a in P.Eltseq()]
         gens.append(coords)
     return gens
 
 def aInv_data_to_ell_curve(g, aInv_data):
-    aInv_arrays = [[ZZ(c[0]) / ZZ(c[1]) for c in a] for a in aInv_data]
+    aInv_arrays = [[QQ(c) for c in a] for a in aInv_data]
     K.<w> = NumberField(g)
     aInvs = [K(a) for a in aInv_arrays]
     E = EllipticCurve(aInvs)
@@ -330,110 +335,123 @@ except FileNotFoundError:
     t = record_data(curve, OUTPUT_FILE, t)
 else:
     assert curve["label"] == LABEL
-    if curve["verified"] or curve["obstruction_found"]:
+    if curve["verified"] or (HALT_ON_OBSTRUCTION and curve["obstruction_found"]):
         exit()
 
 try:
-    # Compute coefficients of twist parameters
-    if curve["twists"] is None:
-        curve["twists"] = twist_data(curve)
-        t = record_data(curve, OUTPUT_FILE, t)
-
-    # Search for points on each twist, and choose a base point
-    for i in range(len(curve["twists"])):
-        found_pts, base_pt = twist_point_search(curve, twist_index=i, bound=SEARCH_BOUND)
-        curve["twists"][i]["found_pts"] = found_pts
-        curve["twists"][i]["base_pt"] = base_pt
-        t = record_data(curve, OUTPUT_FILE, t)
-
-    # Test whether the twists are locally solvable
-    for i in range(len(curve["twists"])):
-        twist = curve["twists"][i]
-        try:
-            loc_solv = twists_locally_solvable(curve, twist_index=i)
-        except RuntimeError:
-            curve["twists"][i]["loc_solv_error"] = True
-        else:
-            twist["loc_solv"] = loc_solv
-            if not loc_solv:
-                twist["pts"] = []
-                twist["verified"] = True
-        t = record_data(curve, OUTPUT_FILE, t)
-
-    # Record whether all the twists appear to satisfy the Hasse principle
-    curve["hasse_principle"] = hasse_principle(curve)
-    if not curve["hasse_principle"]:
-        curve["obstruction_found"] = True
-    t = record_data(curve, OUTPUT_FILE, t)
-
-    # Compute a-invariants of the elliptic curve associated to each twist with found points
-    for i in range(len(curve["twists"])):
-        twist = curve["twists"][i]
-        if twist["base_pt"] is None:
-            continue
-        for j in range(len(curve["g"])):
-            D = twist["g1"][j]
-            if D["aInv"] is None:
-                D["aInv"] = get_aInv_data(curve, twist_index=i, g_index=j)
-                t = record_data(curve, OUTPUT_FILE, t)
-
-    # Compute the Mordell-Weil group of each twist where we found a base point
-    for i in range(len(curve["twists"])):
-        twist = curve["twists"][i]
-        if twist["base_pt"] is None:
-            continue
-        for j in range(len(curve["g"])):
-            D = twist["g1"][j]
-            if D["gens"] is not None:
-                continue
-            rank, MW_proven, orders, gens = twist_MW_group(curve, twist_index=i, g_index=j)
-            D["rank"] = rank
-            D["MW_proven"] = MW_proven
-            D["MW_orders"] = orders
-            D["gens"] = gens
-            D["chabauty_possible"] = (MW_proven and rank < 5)
-            if not D["chabauty_possible"]:
-                curve["obstruction_found"] = True
+    if "setup" in STAGES:
+        # Compute coefficients of twist parameters
+        if curve["twists"] is None:
+            curve["twists"] = twist_data(curve)
+            curve["stage"] = "setup"
+            t = record_data(curve, OUTPUT_FILE, t)
+    elif "search" in STAGES:
+        # Search for points on each twist, and choose a base point
+        for i in range(len(curve["twists"])):
+            found_pts, base_pt = twist_point_search(curve, twist_index=i, bound=SEARCH_BOUND)
+            curve["twists"][i]["found_pts"] = found_pts
+            curve["twists"][i]["base_pt"] = base_pt
+            curve["stage"] = "search"
+            t = record_data(curve, OUTPUT_FILE, t)
+    elif "locsolv" in STAGES:
+        # Test whether the twists are locally solvable
+        for i in range(len(curve["twists"])):
+            twist = curve["twists"][i]
+            try:
+                loc_solv = twists_locally_solvable(curve, twist_index=i)
+            except RuntimeError:
+                curve["twists"][i]["loc_solv_error"] = True
+            else:
+                twist["loc_solv"] = loc_solv
+                if not loc_solv:
+                    twist["pts"] = []
+                    twist["verified"] = True
             t = record_data(curve, OUTPUT_FILE, t)
 
-    # Run elliptic Chabauty on the twists, where possible
-    memory_error = False
-    for i in range(len(curve["twists"])):
-        twist = curve["twists"][i]
-        if twist["base_pt"] is None:
-            continue
-        for j in range(len(curve["g"])):
-            D = twist["g1"][j]
-            if twist["verified"] or not D["chabauty_possible"]:
-                continue
-            try:
-                pts = twist_chabauty(curve, twist_index=i, g_index=j)
-            except (MemoryError, RuntimeError, TypeError):
-                D["chabauty_memory_error"] = True
-                memory_error = True
-            else:
-                twist["pts"] = pts
-                D["chabauty_memory_error"] = False
-                twist["verified"] = True
-            finally:
-                t = record_data(curve, OUTPUT_FILE, t)
-                if memory_error:
-                    raise MemoryError("Chabauty used too much memory.")
-
-    # Extract x-coordinates for points on the curve
-    if not curve["verified"]:
-        coords, verified = x_coords_of_twist_pts(curve)
-        curve["x-coords"] = coords
-        curve["verified"] = verified
-        curve["exception"] = False
+        # Record whether all the twists appear to satisfy the Hasse principle
+        curve["hasse_principle"] = hasse_principle(curve)
+        if not curve["hasse_principle"]:
+            curve["obstruction_found"] = True
+        curve["stage"] = "locsolv"
         t = record_data(curve, OUTPUT_FILE, t)
 
-    if curve["pts"] is None and curve["verified"]:
-        pts = []
-        for P in curve["x-coords"]:
-            pts += lift_to_hyperelliptic_curve(curve["coeffs"], P[0], P[1])
-        curve["pts"] = pts
-        curve["count"] = len(pts)
+    elif "aInv" in STAGES:
+        # Compute a-invariants of the elliptic curve associated to each twist with found points
+        for i in range(len(curve["twists"])):
+            twist = curve["twists"][i]
+            if twist["base_pt"] is None:
+                continue
+            for j in range(len(curve["g"])):
+                D = twist["g1"][j]
+                if D["aInv"] is None:
+                    D["aInv"] = get_aInv_data(curve, twist_index=i, g_index=j)
+                    t = record_data(curve, OUTPUT_FILE, t)
+        curve["stage"] = "aInv"
+        t = record_data(curve, OUTPUT_FILE, t)
+
+    elif "MW" in STAGES:
+        # Compute the Mordell-Weil group of each twist where we found a base point
+        for i in range(len(curve["twists"])):
+            twist = curve["twists"][i]
+            if twist["base_pt"] is None:
+                continue
+            for j in range(len(curve["g"])):
+                D = twist["g1"][j]
+                if D["gens"] is not None:
+                    continue
+                rank, MW_proven, orders, gens = twist_MW_group(curve, twist_index=i, g_index=j)
+                D["rank"] = rank
+                D["MW_proven"] = MW_proven
+                D["MW_orders"] = orders
+                D["gens"] = gens
+                D["chabauty_possible"] = (MW_proven and rank < 5)
+                if not D["chabauty_possible"]:
+                    curve["obstruction_found"] = True
+                t = record_data(curve, OUTPUT_FILE, t)
+        curve["stage"] = "MW"
+        t = record_data(curve, OUTPUT_FILE, t)
+
+    elif "Chabauty" in STAGES:
+        # Run elliptic Chabauty on the twists, where possible
+        memory_error = False
+        for i in range(len(curve["twists"])):
+            twist = curve["twists"][i]
+            if twist["base_pt"] is None:
+                continue
+            for j in range(len(curve["g"])):
+                D = twist["g1"][j]
+                if twist["verified"] or not D["chabauty_possible"]:
+                    continue
+                try:
+                    pts = twist_chabauty(curve, twist_index=i, g_index=j)
+                except (MemoryError, RuntimeError, TypeError):
+                    D["chabauty_memory_error"] = True
+                    memory_error = True
+                else:
+                    twist["pts"] = pts
+                    D["chabauty_memory_error"] = False
+                    twist["verified"] = True
+                finally:
+                    t = record_data(curve, OUTPUT_FILE, t)
+                    if memory_error:
+                        raise MemoryError("Chabauty used too much memory.")
+
+        # Extract x-coordinates for points on the curve
+        if not curve["verified"]:
+            coords, verified = x_coords_of_twist_pts(curve)
+            curve["x-coords"] = coords
+            curve["verified"] = verified
+            curve["exception"] = False
+            t = record_data(curve, OUTPUT_FILE, t)
+
+        if curve["pts"] is None and curve["verified"]:
+            pts = []
+            for P in curve["x-coords"]:
+                pts += lift_to_hyperelliptic_curve(curve["coeffs"], P[0], P[1])
+            curve["pts"] = pts
+            curve["count"] = len(pts)
+            t = record_data(curve, OUTPUT_FILE, t)
+        curve["stage"] = "Chabauty"
         t = record_data(curve, OUTPUT_FILE, t)
 except Exception as e:
     # If an uncaught exception happens at any point, record that it happened first

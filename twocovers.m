@@ -494,7 +494,7 @@ function twist_chabauty(f, root, g, delta, base_pt, MW_orders, MW_gens)
     // Construct the map to P^1 for elliptic Chabauty
     Ecov := E_to_E1 * E1_to_D * map< D -> ProjectiveSpace(Rationals(), 1) | [D.1, D.3] >;
     A := AbelianGroup(MW_orders);
-    gens := [E![K![a[1]/a[2] : a in c] : c in coords] : coords in MW_gens];
+    gens := [E![K!c : c in coords] : coords in MW_gens];
     mw := map< A -> E(K) | a :-> &+[E(K) | e[i] * gens[i] : i in [1 .. #gens]] where e is Eltseq(a) >;
     mw_map := map< A -> E | a :-> mw(a) >;
     //mw_map := map< A -> E | a :-> &+[Eltseq(a)[i] * gens[i] : i in [1 .. #gens]] >;
