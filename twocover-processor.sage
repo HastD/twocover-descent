@@ -64,6 +64,9 @@ if args.label is not None:
 elif args.index is not None:
     with open(args.label_list, "r") as f:
         LABEL_LIST = json.load(f)
+    if args.index < 0 or args.index >= len(LABEL_LIST):
+        print("Index {} out of bounds; exiting.".format(args.index))
+        exit()
     LABEL = LABEL_LIST[args.index]
 else:
     raise ValueError("Must provide a label or label index.")
