@@ -70,8 +70,8 @@ else:
 
 DATA_FILE = args.database
 HALT_ON_OBSTRUCTION = False # stop immediately if obstruction found?
-STAGES = frozenset(args.stages.split(","))
-if not STAGES.issubset({"setup", "search", "locsolv", "aInv", "MW", "Chabauty"}):
+STAGES = frozenset(args.stages.lower().split(","))
+if not STAGES.issubset({"setup", "search", "locsolv", "ainv", "mw", "chabauty"}):
     raise ValueError("Invalid stage label.")
 
 magma.load("twocovers.m")
@@ -377,7 +377,7 @@ try:
         curve["stage"] = "locsolv"
         t = record_data(curve, OUTPUT_FILE, t)
 
-    if "aInv" in STAGES:
+    if "ainv" in STAGES:
         # Compute a-invariants of the elliptic curve associated to each twist with found points
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
@@ -391,7 +391,7 @@ try:
         curve["stage"] = "aInv"
         t = record_data(curve, OUTPUT_FILE, t)
 
-    if "MW" in STAGES:
+    if "mw" in STAGES:
         # Compute the Mordell-Weil group of each twist where we found a base point
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
@@ -413,7 +413,7 @@ try:
         curve["stage"] = "MW"
         t = record_data(curve, OUTPUT_FILE, t)
 
-    if "Chabauty" in STAGES:
+    if "chabauty" in STAGES:
         # Run elliptic Chabauty on the twists, where possible
         memory_error = False
         for i in range(len(curve["twists"])):
