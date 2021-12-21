@@ -9,7 +9,7 @@
 # Specify hard time limit for the job. 
 #   The job will be aborted if it runs longer than this time.
 #   The default time is 12 hours
-#$ -l h_rt=12:00:00
+#$ -l h_rt=6:00:00
 
 # Require avx instruction set
 #$ -l avx
@@ -29,6 +29,6 @@ module load magma_usyd/2.26-9
 for i in {0..99}
 do
     index=$(( 100*($SGE_TASK_ID - 1) + $i ))
-    sage --python ./twocover-processor.sage.py --index $index --output_directory /projectnb/arithgeo/drhast/twocover-results --stages setup
+    sage --python ./twocover-processor.sage.py --index $index --output_directory /projectnb/arithgeo/drhast/twocover-results --stages setup,search,locsolv,ainv
 done
 
