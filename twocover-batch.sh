@@ -15,7 +15,7 @@
 #$ -l avx
 
 # Join stdout and stderr streams
-#$ -j o
+#$ -j y
 
 # Specify location of stdout stream
 #$ -o /projectnb/arithgeo/drhast/twocover-results/stdout
