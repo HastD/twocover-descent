@@ -15,7 +15,10 @@
 #$ -l avx
 
 # Join stdout and stderr streams
-#$ -j y
+#$ -j o
+
+# Specify location of stdout stream
+#$ -o /projectnb/arithgeo/drhast/twocover-results/stdout
 
 # Send an email when the job finishes or if it is aborted (by default no email is sent).
 #$ -m ea
