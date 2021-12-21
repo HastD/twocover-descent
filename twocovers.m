@@ -459,7 +459,12 @@ function two_selmer_class_groups(E)
 end function;
 
 function twist_ell_curve(f, root, g, delta)
-    K<w> := NumberField(g);
+    if Degree(g) eq 1 then
+        K := RationalField();
+        w := Roots(g)[1][1];
+    else
+        K<w> := NumberField(g);
+    end if;
     A := ChangeRing(Parent(f), K);
     h := A!f div ((A.1 - root) * (A.1 - w));
     D := genus1_quotient(h, root, delta);
