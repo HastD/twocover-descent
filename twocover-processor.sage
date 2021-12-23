@@ -57,6 +57,7 @@ parser.add_argument("--database", help="the database file to read from", default
 parser.add_argument("--label_list", help="the list of labels the index is based on", default="data/labels.json")
 parser.add_argument("--output_directory", help="directory for output files", default="./results")
 parser.add_argument("--stages", help="comma-separated list from: 'setup', 'search', 'locsolv', 'aInv', 'MW', or 'Chabauty'")
+parser.add_argument("--missing", help="use list of labels with no preexisting file", action="store_true")
 args = parser.parse_args()
 
 if args.label is not None:
@@ -64,6 +65,10 @@ if args.label is not None:
 elif args.index is not None:
     with open(args.label_list, "r") as f:
         LABEL_LIST = json.load(f)
+    if args.missing:
+        # This mode is for filling in missing curves that were skipped for whatever reason.
+        files_in_output_dir = os.listdir(args.output_directory)
+        LABEL_LIST = [label for label in LABEL_LIST if "curve-{}.json".format(label) not in files_in_output_dir]
     if args.index < 0 or args.index >= len(LABEL_LIST):
         print("Index {} out of bounds; exiting.".format(args.index))
         exit()
