@@ -72,7 +72,7 @@ else:
     raise ValueError("Must provide a label or label index.")
 
 DATA_FILE = args.database
-HALT_ON_OBSTRUCTION = False # stop immediately if obstruction found?
+HALT_ON_OBSTRUCTION = True # stop immediately if obstruction found?
 STAGES = frozenset(args.stages.lower().split(","))
 if not STAGES.issubset({"setup", "search", "locsolv", "ainv", "mw", "chabauty"}):
     raise ValueError("Invalid stage label.")
