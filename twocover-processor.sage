@@ -344,13 +344,13 @@ else:
         exit()
 
 try:
-    if "setup" in STAGES:
+    if "setup" in STAGES and curve["stage"] not in {"setup", "search", "locsolv", "ainv", "mw", "chabauty"}:
         # Compute coefficients of twist parameters
         if curve["twists"] is None:
             curve["twists"] = twist_data(curve)
             curve["stage"] = "setup"
             t = record_data(curve, OUTPUT_FILE, t)
-    if "search" in STAGES:
+    if "search" in STAGES and curve["stage"] not in {"search", "locsolv", "ainv", "mw", "chabauty"}:
         # Search for points on each twist, and choose a base point
         for i in range(len(curve["twists"])):
             found_pts, base_pt = twist_point_search(curve, twist_index=i, bound=SEARCH_BOUND)
@@ -358,7 +358,7 @@ try:
             curve["twists"][i]["base_pt"] = base_pt
             curve["stage"] = "search"
             t = record_data(curve, OUTPUT_FILE, t)
-    if "locsolv" in STAGES:
+    if "locsolv" in STAGES and curve["stage"] not in {"locsolv", "ainv", "mw", "chabauty"}:
         # Test whether the twists are locally solvable
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
@@ -380,7 +380,7 @@ try:
         curve["stage"] = "locsolv"
         t = record_data(curve, OUTPUT_FILE, t)
 
-    if "ainv" in STAGES:
+    if "ainv" in STAGES and curve["stage"] not in {"ainv", "mw", "chabauty"}:
         # Compute a-invariants of the elliptic curve associated to each twist with found points
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
