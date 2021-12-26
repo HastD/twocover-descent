@@ -80,7 +80,7 @@ else:
 DATA_FILE = args.database
 HALT_ON_OBSTRUCTION = True # stop immediately if obstruction found?
 STAGES = frozenset(args.stages.lower().split(","))
-if not STAGES.issubset({"setup", "search", "locsolv", "ainv", "mw", "chabauty"}):
+if not STAGES.issubset({"setup", "search", "locsolv", "ainv", "mw", "reduce", "chabauty"}):
     raise ValueError("Invalid stage label.")
 
 magma.load("twocovers.m")
@@ -242,47 +242,61 @@ def get_aInv_data(curve, twist_index, g_index):
     aInvs = E.aInvariants()
     return [[str(QQ(c)) for c in a.Eltseq()] for a in aInvs]
 
-def MW_gens(mw, A, reduce=False):
-    """Extract and parse generators from MW group, optionally applying LLL reduction first"""
+def aInv_data_to_ell_curve(g, aInv_data):
+    """Builds elliptic curve in Magma with given a-invariant data"""
+    aInv_arrays = [[QQ(c) for c in a] for a in aInv_data]
+    K = magma.NumberField(g)
+    aInvs = [K(a) for a in aInv_arrays]
+    E = magma.EllipticCurve(aInvs)
+    return E
+
+def extract_MW_gens(mw, A):
+    """Extract MW generators from map mw: A -> E(K)"""
     gens_mag = [magma("{}({})".format(mw.name(), a.name())) for a in A.gens()]
-    if reduce:
-        indep_gens = []
-        torsion_gens = []
-        for P in gens_mag:
-            if P.Order() == 0:
-                indep_gens.append(P)
-            else:
-                torsion_gens.append(P)
-        r = len(indep_gens)
-        M = magma.HeightPairingMatrix(indep_gens)
-        I = magma.ScalarMatrix(r, M.BaseRing()(1))
-        L = magma.Lattice(I, M)
-        L_, T_mag = L.BasisReduction(nvals=2)
-        T = T_mag.sage()
-        new_indep_gens = []
-        for i in range(r):
-            P = indep_gens[0].Curve().Identity()
-            for j in range(r):
-                P += T[i][j] * indep_gens[j]
-            new_indep_gens.append(P)
-        gens_mag = torsion_gens + new_indep_gens
+    return gens_mag
+
+def parse_MW_gens(gens_mag):
+    """Parse generators of MW group into JSON-compatible format"""
     gens = []
     for P in gens_mag:
         coords = [[str(QQ(c)) for c in a.Eltseq()] for a in P.Eltseq()]
         gens.append(coords)
     return gens
 
-def aInv_data_to_ell_curve(g, aInv_data):
-    aInv_arrays = [[QQ(c) for c in a] for a in aInv_data]
-    K.<w> = NumberField(g)
-    aInvs = [K(a) for a in aInv_arrays]
-    E = EllipticCurve(aInvs)
-    return E
-
-def twist_MW_group(curve, twist_index, g_index):
-    twist = curve["twists"][twist_index]
+def build_MW_gens(D):
+    """Given generator data in JSON-compatible format, build MW generators as Magma objects"""
     R.<x> = QQ[]
-    D = twist["g1"][g_index]
+    g = R(D["g"])
+    E = aInv_data_to_ell_curve(g, D["aInv"])
+    K = E.BaseRing()
+    gens_mag = [E([K(coord) for coord in gen]) for gen in D["gens"]]
+    return gens_mag
+
+def reduce_MW_gens(gens_mag):
+    """Given a list of MW generators, apply LLL reduction to get smaller generators"""
+    indep_gens = []
+    torsion_gens = []
+    for P in gens_mag:
+        if P.Order() == 0:
+            indep_gens.append(P)
+        else:
+            torsion_gens.append(P)
+    r = len(indep_gens)
+    M = magma.HeightPairingMatrix(indep_gens)
+    I = magma.ScalarMatrix(r, M.BaseRing()(1))
+    L = magma.Lattice(I, M)
+    L_, T_mag = L.BasisReduction(nvals=2)
+    T = T_mag.sage()
+    new_indep_gens = []
+    for i in range(r):
+        P = indep_gens[0].Curve().Identity()
+        for j in range(r):
+            P += T[i][j] * indep_gens[j]
+        new_indep_gens.append(P)
+    return torsion_gens + new_indep_gens
+
+def twist_MW_group(D):
+    R.<x> = QQ[]
     g = R(D["g"])
     assert D["aInv"] is not None
     E = aInv_data_to_ell_curve(g, D["aInv"])
@@ -291,7 +305,8 @@ def twist_MW_group(curve, twist_index, g_index):
     rank = int(magma.TorsionFreeRank(A))
     MW_proven = (bool_rank == bool_index == magma(True))
     orders = [int(gen.Order()) for gen in A.gens()]
-    gens = MW_gens(mw, A, reduce=True)
+    gens_mag = extract_MW_gens(mw, A)
+    gens = parse_MW_gens(gens_mag)
     return rank, MW_proven, orders, gens
 
 def twist_chabauty(curve, twist_index, g_index):
@@ -388,9 +403,9 @@ else:
         exit()
 
 try:
-    if "setup" in STAGES and curve["stage"].lower() not in {"setup", "search", "locsolv", "ainv", "mw", "chabauty"}:
+    if "setup" in STAGES:
         # Compute coefficients of twist parameters
-        if curve["twists"] is None:
+        if curve["twists"] is None and curve["stage"].lower() not in {"setup", "search", "locsolv", "ainv", "mw", "reduce", "chabauty"}:
             logging.info("Setting up initial curve data...")
             curve["twists"] = twist_data(curve)
             curve["stage"] = "setup"
@@ -398,21 +413,26 @@ try:
             logging.info("Setup complete.")
         else:
             logging.info("Setup already done.")
-    if "search" in STAGES and curve["stage"].lower() not in {"search", "locsolv", "ainv", "mw", "chabauty"}:
+    if "search" in STAGES and curve["stage"].lower() not in {"search", "locsolv", "ainv", "mw", "reduce", "chabauty"}:
         # Search for points on each twist, and choose a base point
         logging.info("Searching for rational points on each twist...")
         for i in range(len(curve["twists"])):
+            twist = curve["twists"][i]
+            if twist["base_pt"] is not None:
+                continue
             found_pts, base_pt = twist_point_search(curve, twist_index=i, bound=SEARCH_BOUND)
-            curve["twists"][i]["found_pts"] = found_pts
-            curve["twists"][i]["base_pt"] = base_pt
+            twist["found_pts"] = found_pts
+            twist["base_pt"] = base_pt
             curve["stage"] = "search"
             t = record_data(curve, OUTPUT_FILE, t)
         logging.info("Finished searching for rational points on each twist.")
-    if "locsolv" in STAGES and curve["stage"].lower() not in {"locsolv", "ainv", "mw", "chabauty"}:
+    if "locsolv" in STAGES and curve["stage"].lower() not in {"locsolv", "ainv", "mw", "reduce", "chabauty"}:
         # Test whether the twists are locally solvable
         logging.info("Testing local solvability of twists...")
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
+            if twist["loc_solv"] is not None:
+                continue
             try:
                 loc_solv = twists_locally_solvable(curve, twist_index=i)
             except RuntimeError:
@@ -433,7 +453,7 @@ try:
         curve["stage"] = "locsolv"
         t = record_data(curve, OUTPUT_FILE, t)
 
-    if "ainv" in STAGES and curve["stage"].lower() not in {"ainv", "mw", "chabauty"}:
+    if "ainv" in STAGES and curve["stage"].lower() not in {"ainv", "mw", "reduce", "chabauty"}:
         # Compute a-invariants of the elliptic curve associated to each twist with found points
         logging.info("Computing elliptic curve a-invariants...")
         for i in range(len(curve["twists"])):
@@ -462,7 +482,7 @@ try:
                     logging.info("MW generators already computed (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     continue
                 logging.info("Computing MW group (delta = {}, g = {})...".format(twist["coeffs"], D["g"]))
-                rank, MW_proven, orders, gens = twist_MW_group(curve, twist_index=i, g_index=j)
+                rank, MW_proven, orders, gens = twist_MW_group(D)
                 logging.info("Finished MW computation (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                 D["rank"] = rank
                 D["MW_proven"] = MW_proven
@@ -473,6 +493,24 @@ try:
                     curve["obstruction_found"] = True
                 t = record_data(curve, OUTPUT_FILE, t)
         curve["stage"] = "mw"
+        t = record_data(curve, OUTPUT_FILE, t)
+
+    if "reduce" in STAGES:
+        # Use LLL reduction to find smaller MW generators
+        logging.info("Reducing MW generators...")
+        for i in range(len(curve["twists"])):
+            twist = curve["twists"][i]
+            if twist["base_pt"] is None or twist["verified"]:
+                continue
+            for j in range(len(curve["g"])):
+                D = twist["g1"][j]
+                if D["gens"] is None:
+                    continue
+                gens_mag = build_MW_gens(D)
+                reduced_gens = reduce_MW_gens(gens_mag)
+                D["gens"] = parse_MW_gens(reduced_gens)
+        logging.info("Finished reducing MW generators.")
+        curve["stage"] = "reduce"
         t = record_data(curve, OUTPUT_FILE, t)
 
     if "chabauty" in STAGES:
@@ -522,6 +560,7 @@ try:
                 pts += lift_to_hyperelliptic_curve(curve["coeffs"], P[0], P[1])
             curve["pts"] = pts
             curve["count"] = len(pts)
+            logging.info("Rational points successfully computed.")
             t = record_data(curve, OUTPUT_FILE, t)
         curve["stage"] = "chabauty"
         t = record_data(curve, OUTPUT_FILE, t)
