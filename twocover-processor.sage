@@ -541,6 +541,9 @@ try:
                 elif not D["chabauty_possible"]:
                     logging.info("Skipped Chabauty because of MW obstruction (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     continue
+                elif D["gens"] is None:
+                    logging.info("Skipped Chabauty because MW generators haven't been computed (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
+                    continue
                 try:
                     logging.info("Running elliptic Chabauty (delta = {}, g = {})...".format(twist["coeffs"], D["g"]))
                     pts = twist_chabauty(curve, twist_index=i, g_index=j)
