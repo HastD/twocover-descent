@@ -80,7 +80,10 @@ else:
 DATA_FILE = args.database
 HALT_ON_OBSTRUCTION = True # stop immediately if obstruction found?
 STAGES = frozenset(args.stages.lower().split(","))
-if not STAGES.issubset({"setup", "search", "locsolv", "ainv", "mw", "reduce", "chabauty"}):
+ALL_STAGES = {"setup", "search", "locsolv", "ainv", "mw", "reduce", "chabauty"}
+if "all" in STAGES:
+    STAGES = ALL_STAGES
+elif not STAGES.issubset(ALL_STAGES):
     raise ValueError("Invalid stage label.")
 
 magma.load("twocovers.m")

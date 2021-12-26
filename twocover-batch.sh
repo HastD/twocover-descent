@@ -30,5 +30,5 @@ module load magma_usyd/2.26-9
 # Bash array index starts from 0, so we need to subtract one from SGE_TASK_ID value
 
 index=$(( $SGE_TASK_ID - 1 ))
-sage --python ./twocover-processor.sage.py --index $index --output_directory /projectnb/arithgeo/drhast/twocover-results --stages setup,search,locsolv,ainv,mw
+sage --python ./twocover-processor.sage.py --index $index --output_directory /projectnb/arithgeo/drhast/twocover-results --stages all
 
