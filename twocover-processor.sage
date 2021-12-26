@@ -46,6 +46,7 @@ Here's the JSON data scheme that this script produces:
 
 import argparse
 import json
+import logging
 import resource
 import time
 
@@ -89,8 +90,19 @@ MEMORY_LIMIT = 5 * 1024 * 1024 * 1024
 resource.setrlimit(resource.RLIMIT_AS, (MEMORY_LIMIT, MEMORY_LIMIT))
 resource.setrlimit(resource.RLIMIT_RSS, (MEMORY_LIMIT, MEMORY_LIMIT))
 
-OUTPUT_FILE = "{}/curve-{}.json".format(args.output_directory, LABEL)
 SEARCH_BOUND = 10000
+
+OUTPUT_FILE_PREFIX = "{}/curve-{}".format(args.output_directory, LABEL)
+OUTPUT_FILE = OUTPUT_FILE_PREFIX + ".json"
+LOG_FILE = OUTPUT_FILE_PREFIX + ".log"
+
+# Set up log file
+logging.basicConfig(
+    filename=LOG_FILE,
+    encoding="utf-8",
+    format="%(asctime)s %(levelname)s: %(message)s",
+    level=logging.DEBUG
+)
 
 def integral_proj_pt(P):
     """Takes a list of rational numbers, clears denominators, returns list of ints"""
@@ -347,6 +359,7 @@ def record_data(data, filename, timestamp):
     with open(filename, "w") as f:
         f.write(s)
     if HALT_ON_OBSTRUCTION and data["obstruction_found"]:
+        logging.info("Obstruction found to provably computing rational points. Exiting.")
         exit()
     return t
 
@@ -367,31 +380,43 @@ except FileNotFoundError:
     t = record_data(curve, OUTPUT_FILE, t)
 else:
     assert curve["label"] == LABEL
-    if curve["verified"] or (HALT_ON_OBSTRUCTION and curve["obstruction_found"]):
+    if curve["verified"]:
+        logging.info("Rational points already verified; exiting.")
+        exit()
+    elif HALT_ON_OBSTRUCTION and curve["obstruction_found"]:
+        logging.info("Obstruction already found. Exiting.")
         exit()
 
 try:
     if "setup" in STAGES and curve["stage"].lower() not in {"setup", "search", "locsolv", "ainv", "mw", "chabauty"}:
         # Compute coefficients of twist parameters
         if curve["twists"] is None:
+            logging.info("Setting up initial curve data...")
             curve["twists"] = twist_data(curve)
             curve["stage"] = "setup"
             t = record_data(curve, OUTPUT_FILE, t)
+            logging.info("Setup complete.")
+        else:
+            logging.info("Setup already done.")
     if "search" in STAGES and curve["stage"].lower() not in {"search", "locsolv", "ainv", "mw", "chabauty"}:
         # Search for points on each twist, and choose a base point
+        logging.info("Searching for rational points on each twist...")
         for i in range(len(curve["twists"])):
             found_pts, base_pt = twist_point_search(curve, twist_index=i, bound=SEARCH_BOUND)
             curve["twists"][i]["found_pts"] = found_pts
             curve["twists"][i]["base_pt"] = base_pt
             curve["stage"] = "search"
             t = record_data(curve, OUTPUT_FILE, t)
+        logging.info("Finished searching for rational points on each twist.")
     if "locsolv" in STAGES and curve["stage"].lower() not in {"locsolv", "ainv", "mw", "chabauty"}:
         # Test whether the twists are locally solvable
+        logging.info("Testing local solvability of twists...")
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
             try:
                 loc_solv = twists_locally_solvable(curve, twist_index=i)
             except RuntimeError:
+                logging.exception("Exception occurred while checking local solvability (delta = {}).".format(twist["coeffs"]))
                 curve["twists"][i]["loc_solv_error"] = True
             else:
                 twist["loc_solv"] = loc_solv
@@ -399,6 +424,7 @@ try:
                     twist["pts"] = []
                     twist["verified"] = True
             t = record_data(curve, OUTPUT_FILE, t)
+        logging.info("Finished local solvability testing.")
 
         # Record whether all the twists appear to satisfy the Hasse principle
         curve["hasse_principle"] = hasse_principle(curve)
@@ -409,6 +435,7 @@ try:
 
     if "ainv" in STAGES and curve["stage"].lower() not in {"ainv", "mw", "chabauty"}:
         # Compute a-invariants of the elliptic curve associated to each twist with found points
+        logging.info("Computing elliptic curve a-invariants...")
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
             if twist["base_pt"] is None:
@@ -419,6 +446,7 @@ try:
                     D["aInv"] = get_aInv_data(curve, twist_index=i, g_index=j)
                     t = record_data(curve, OUTPUT_FILE, t)
         curve["stage"] = "ainv"
+        logging.info("Finished computation of a-invariants.")
         t = record_data(curve, OUTPUT_FILE, t)
 
     if "mw" in STAGES:
@@ -426,12 +454,16 @@ try:
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
             if twist["base_pt"] is None:
+                logging.info("Skipped MW computation because no base point (delta = {})".format(twist["coeffs"]))
                 continue
             for j in range(len(curve["g"])):
                 D = twist["g1"][j]
                 if D["gens"] is not None:
+                    logging.info("MW generators already computed (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     continue
+                logging.info("Computing MW group (delta = {}, g = {})...".format(twist["coeffs"], D["g"]))
                 rank, MW_proven, orders, gens = twist_MW_group(curve, twist_index=i, g_index=j)
+                logging.info("Finished MW computation (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                 D["rank"] = rank
                 D["MW_proven"] = MW_proven
                 D["MW_orders"] = orders
@@ -449,20 +481,28 @@ try:
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
             if twist["base_pt"] is None:
+                logging.info("Skipped Chabauty because no base point (delta = {})".format(twist["coeffs"]))
                 continue
             for j in range(len(curve["g"])):
                 D = twist["g1"][j]
-                if twist["verified"] or not D["chabauty_possible"]:
+                if twist["verified"]:
+                    logging.info("Skipped Chabauty because twist points already verified (delta = {})".format(twist["coeffs"]))
+                    break
+                elif not D["chabauty_possible"]:
+                    logging.info("Skipped Chabauty because of MW obstruction (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     continue
                 try:
+                    logging.info("Running elliptic Chabauty (delta = {}, g = {})...".format(twist["coeffs"], D["g"]))
                     pts = twist_chabauty(curve, twist_index=i, g_index=j)
                 except (MemoryError, RuntimeError, TypeError):
+                    logging.exception("(Likely) memory error occurred during Chabauty stage on twist with delta = {}, g = {}.".format(twist["coeffs"], D["g"]))
                     D["chabauty_memory_error"] = True
                     memory_error = True
                 else:
                     twist["pts"] = pts
                     D["chabauty_memory_error"] = False
                     twist["verified"] = True
+                    logging.info("Chabauty completed successfully (delta = {}, g = {}).".format(twist["coeffs"], D["g"]))
                 finally:
                     t = record_data(curve, OUTPUT_FILE, t)
                     if memory_error:
@@ -488,6 +528,7 @@ try:
 except Exception as e:
     # If an uncaught exception happens at any point, record that it happened first
     curve["exception"] = True
+    logging.exception("An exception occurred. Recording data before exiting.")
     record_data(curve, OUTPUT_FILE, t)
     raise e
 
