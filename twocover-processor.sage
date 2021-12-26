@@ -93,6 +93,7 @@ magma.load("twocovers.m")
 MEMORY_LIMIT = 5 * 1024 * 1024 * 1024
 resource.setrlimit(resource.RLIMIT_AS, (MEMORY_LIMIT, MEMORY_LIMIT))
 resource.setrlimit(resource.RLIMIT_RSS, (MEMORY_LIMIT, MEMORY_LIMIT))
+magma.eval("SetMemoryLimit({})".format(2 * MEMORY_LIMIT))
 
 SEARCH_BOUND = 10000
 
