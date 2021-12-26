@@ -33,6 +33,7 @@ Here's the JSON data scheme that this script produces:
                     "chabauty_memory_error": <bool>, # has a memory error occurred while running elliptic Chabauty?
                     "MW_orders": [<int>], # orders of generators of MW group
                     "gens": [[[str]]] # generators of MW group (str in the form "num/denom")
+                    "gens_reduced": bool # whether the MW generators have already been reduced
                 }
             ]
         }
@@ -170,7 +171,8 @@ def twist_data(curve):
                 "MW_proven": None,
                 "chabauty_possible": None,
                 "chabauty_memory_error": False,
-                "gens": None
+                "gens": None,
+                "gens_reduced": None
             } for g in curve["g"]]
     } for d in coeff_data]
 
@@ -491,6 +493,7 @@ try:
                 D["MW_proven"] = MW_proven
                 D["MW_orders"] = orders
                 D["gens"] = gens
+                D["gens_reduced"] = False
                 D["chabauty_possible"] = (MW_proven and rank < 5)
                 if not D["chabauty_possible"]:
                     curve["obstruction_found"] = True
@@ -509,9 +512,14 @@ try:
                 D = twist["g1"][j]
                 if D["gens"] is None:
                     continue
+                elif "gens_reduced" not in D:
+                    D["gens_reduced"] = False
+                elif D["gens_reduced"]:
+                    continue
                 gens_mag = build_MW_gens(D)
                 reduced_gens = reduce_MW_gens(gens_mag)
                 D["gens"] = parse_MW_gens(reduced_gens)
+                D["gens_reduced"] = True
         logging.info("Finished reducing MW generators.")
         curve["stage"] = "reduce"
         t = record_data(curve, OUTPUT_FILE, t)
