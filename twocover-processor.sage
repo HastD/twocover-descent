@@ -123,7 +123,7 @@ def build_curve_data(label, poly_coeffs):
         "hasse_principle": None,
         "obstruction_found": False,
         "twists": None,
-        "stage": None,
+        "stage": "init",
         "runtime": 0,
         "exception": False
     }
@@ -230,8 +230,30 @@ def get_aInv_data(curve, twist_index, g_index):
     aInvs = E.aInvariants()
     return [[str(QQ(c)) for c in a.Eltseq()] for a in aInvs]
 
-def MW_gens(mw, A):
+def MW_gens(mw, A, reduce=False):
+    """Extract and parse generators from MW group, optionally applying LLL reduction first"""
     gens_mag = [magma("{}({})".format(mw.name(), a.name())) for a in A.gens()]
+    if reduce:
+        indep_gens = []
+        torsion_gens = []
+        for P in gens_mag:
+            if P.Order() == 0:
+                indep_gens.append(P)
+            else:
+                torsion_gens.append(P)
+        r = len(indep_gens)
+        M = magma.HeightPairingMatrix(indep_gens)
+        I = magma.ScalarMatrix(r, M.BaseRing()(1))
+        L = magma.Lattice(I, M)
+        L_, T_mag = L.BasisReduction(nvals=2)
+        T = T_mag.sage()
+        new_indep_gens = []
+        for i in range(r):
+            P = indep_gens[0].Curve().Identity()
+            for j in range(r):
+                P += T[i][j] * indep_gens[j]
+            new_indep_gens.append(P)
+        gens_mag = torsion_gens + new_indep_gens
     gens = []
     for P in gens_mag:
         coords = [[str(QQ(c)) for c in a.Eltseq()] for a in P.Eltseq()]
@@ -257,7 +279,7 @@ def twist_MW_group(curve, twist_index, g_index):
     rank = int(magma.TorsionFreeRank(A))
     MW_proven = (bool_rank == bool_index == magma(True))
     orders = [int(gen.Order()) for gen in A.gens()]
-    gens = MW_gens(mw, A)
+    gens = MW_gens(mw, A, reduce=True)
     return rank, MW_proven, orders, gens
 
 def twist_chabauty(curve, twist_index, g_index):
