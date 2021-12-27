@@ -39,7 +39,6 @@ Here's the JSON data scheme that this script produces:
         }
     ],
     "hasse_principle": <bool>, # do the curve's twists all appear to satisfy the Hasse principle?
-    "stage": <str>, # last stage of the computation that was run
     "runtime": <float>, # estimated runtime in seconds taken so far to compute this data
     "exception": False # did an unhandled exception occur?
 }
@@ -58,7 +57,7 @@ label_group.add_argument("--label", help="the LMFDB label of the curve to proces
 parser.add_argument("--database", help="the database file to read from", default="data/g2c_curves-r2-w1.json")
 parser.add_argument("--label_list", help="the list of labels the index is based on", default="data/labels.json")
 parser.add_argument("--output_directory", help="directory for output files", default="./results")
-parser.add_argument("--stages", help="comma-separated list from: 'setup', 'search', 'locsolv', 'aInv', 'MW', or 'Chabauty'")
+parser.add_argument("--stages", help="comma-separated list from: 'search', 'locsolv', 'ainv', 'mw', 'reduce', 'chabauty'")
 parser.add_argument("--missing", help="use list of labels with no preexisting file", action="store_true")
 args = parser.parse_args()
 
@@ -81,7 +80,7 @@ else:
 DATA_FILE = args.database
 HALT_ON_OBSTRUCTION = True # stop immediately if obstruction found?
 STAGES = frozenset(args.stages.lower().split(","))
-ALL_STAGES = {"setup", "search", "locsolv", "ainv", "mw", "reduce", "chabauty"}
+ALL_STAGES = {"search", "locsolv", "ainv", "mw", "reduce", "chabauty"}
 if "all" in STAGES:
     STAGES = ALL_STAGES
 elif not STAGES.issubset(ALL_STAGES):
@@ -139,8 +138,8 @@ def build_curve_data(label, poly_coeffs):
         "verified": False,
         "hasse_principle": None,
         "obstruction_found": False,
+        "search_bound": 0,
         "twists": None,
-        "stage": "init",
         "runtime": 0,
         "exception": False
     }
@@ -392,15 +391,15 @@ try:
     with open(OUTPUT_FILE, "r") as f:
         curve = json.load(f)
 except FileNotFoundError:
-    if "setup" not in STAGES:
-        raise ValueError("Missing data file and no setup stage.")
     with open(DATA_FILE, "r") as database:
         curve_database = json.load(database)
     # Build the basic data structure recording information about the curve
     curve = build_curve_data(LABEL, curve_database[LABEL])
+    logging.info("Initialized curve data.")
     t = record_data(curve, OUTPUT_FILE, t)
 else:
     assert curve["label"] == LABEL
+    logging.info("Loaded curve data from file.")
     if curve["verified"]:
         logging.info("Rational points already verified; exiting.")
         exit()
@@ -408,31 +407,30 @@ else:
         logging.info("Obstruction already found. Exiting.")
         exit()
 
+exception_handled = False
 try:
-    if "setup" in STAGES:
+    if curve["twists"] is None:
         # Compute coefficients of twist parameters
-        if curve["twists"] is None and curve["stage"].lower() not in {"setup", "search", "locsolv", "ainv", "mw", "reduce", "chabauty"}:
-            logging.info("Setting up initial curve data...")
-            curve["twists"] = twist_data(curve)
-            curve["stage"] = "setup"
-            t = record_data(curve, OUTPUT_FILE, t)
-            logging.info("Setup complete.")
-        else:
-            logging.info("Setup already done.")
-    if "search" in STAGES and curve["stage"].lower() not in {"search", "locsolv", "ainv", "mw", "reduce", "chabauty"}:
+        logging.info("Setting up initial twist data...")
+        curve["twists"] = twist_data(curve)
+        t = record_data(curve, OUTPUT_FILE, t)
+        logging.info("Twist setup complete.")
+    if "search" in STAGES and curve["search_bound"] < SEARCH_BOUND:
         # Search for points on each twist, and choose a base point
         logging.info("Searching for rational points on each twist...")
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
-            if twist["base_pt"] is not None:
+            if twist["base_pt"] is not None or twist["verified"]:
                 continue
             found_pts, base_pt = twist_point_search(curve, twist_index=i, bound=SEARCH_BOUND)
             twist["found_pts"] = found_pts
             twist["base_pt"] = base_pt
-            curve["stage"] = "search"
+            if i = len(curve["twists"]) - 1:
+                # record the search bound after searching the last twist
+                curve["search_bound"] = SEARCH_BOUND
             t = record_data(curve, OUTPUT_FILE, t)
         logging.info("Finished searching for rational points on each twist.")
-    if "locsolv" in STAGES and curve["stage"].lower() not in {"locsolv", "ainv", "mw", "reduce", "chabauty"}:
+    if "locsolv" in STAGES and any(twist["loc_solv"] is None for twist in curve["twists"]):
         # Test whether the twists are locally solvable
         logging.info("Testing local solvability of twists...")
         for i in range(len(curve["twists"])):
@@ -441,9 +439,11 @@ try:
                 continue
             try:
                 loc_solv = twists_locally_solvable(curve, twist_index=i)
-            except RuntimeError:
+            except RuntimeError as e:
                 logging.exception("Exception occurred while checking local solvability (delta = {}).".format(twist["coeffs"]))
                 curve["twists"][i]["loc_solv_error"] = True
+                exception_handled = True
+                raise e
             else:
                 twist["loc_solv"] = loc_solv
                 if not loc_solv:
@@ -456,10 +456,9 @@ try:
         curve["hasse_principle"] = hasse_principle(curve)
         if not curve["hasse_principle"]:
             curve["obstruction_found"] = True
-        curve["stage"] = "locsolv"
         t = record_data(curve, OUTPUT_FILE, t)
 
-    if "ainv" in STAGES and curve["stage"].lower() not in {"ainv", "mw", "reduce", "chabauty"}:
+    if "ainv" in STAGES and any(twist["base_pt"] is not None and any(D["aInv"] is None for D in twist["g1"]) for twist in curve["twists"]):
         # Compute a-invariants of the elliptic curve associated to each twist with found points
         logging.info("Computing elliptic curve a-invariants...")
         for i in range(len(curve["twists"])):
@@ -471,7 +470,6 @@ try:
                 if D["aInv"] is None:
                     D["aInv"] = get_aInv_data(curve, twist_index=i, g_index=j)
                     t = record_data(curve, OUTPUT_FILE, t)
-        curve["stage"] = "ainv"
         logging.info("Finished computation of a-invariants.")
         t = record_data(curve, OUTPUT_FILE, t)
 
@@ -499,18 +497,15 @@ try:
                 if not D["chabauty_possible"]:
                     curve["obstruction_found"] = True
                 t = record_data(curve, OUTPUT_FILE, t)
-        curve["stage"] = "mw"
         t = record_data(curve, OUTPUT_FILE, t)
 
-    if "reduce" in STAGES:
+    if "reduce" in STAGES and any(twist["base_pt"] is not None and not twist["verified"] for twist in curve["twists"]):
         # Use LLL reduction to find smaller MW generators
         logging.info("Reducing MW generators...")
-        for i in range(len(curve["twists"])):
-            twist = curve["twists"][i]
+        for twist in curve["twists"]:
             if twist["base_pt"] is None or twist["verified"]:
                 continue
-            for j in range(len(curve["g"])):
-                D = twist["g1"][j]
+            for D in twist["g1"]:
                 if D["gens"] is None:
                     continue
                 elif "gens_reduced" not in D:
@@ -522,7 +517,6 @@ try:
                 D["gens"] = parse_MW_gens(reduced_gens)
                 D["gens_reduced"] = True
         logging.info("Finished reducing MW generators.")
-        curve["stage"] = "reduce"
         t = record_data(curve, OUTPUT_FILE, t)
 
     if "chabauty" in STAGES:
@@ -551,6 +545,7 @@ try:
                     logging.exception("(Likely) memory error occurred during Chabauty stage on twist with delta = {}, g = {}.".format(twist["coeffs"], D["g"]))
                     D["chabauty_memory_error"] = True
                     memory_error = True
+                    exception_handled = True
                 else:
                     twist["pts"] = pts
                     D["chabauty_memory_error"] = False
@@ -577,12 +572,13 @@ try:
             curve["count"] = len(pts)
             logging.info("Rational points successfully computed.")
             t = record_data(curve, OUTPUT_FILE, t)
-        curve["stage"] = "chabauty"
-        t = record_data(curve, OUTPUT_FILE, t)
 except Exception as e:
     # If an uncaught exception happens at any point, record that it happened first
     curve["exception"] = True
-    logging.exception("An exception occurred. Recording data before exiting.")
+    if not exception_handled:
+        logging.exception("An exception occurred. Recording data and exiting.")
+else:
+    logging.info("Tasks complete. Recording data and exiting.")
+finally:
     record_data(curve, OUTPUT_FILE, t)
-    raise e
 
