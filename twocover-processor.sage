@@ -57,7 +57,7 @@ label_group.add_argument("--label", help="the LMFDB label of the curve to proces
 parser.add_argument("--database", help="the database file to read from", default="data/g2c_curves-r2-w1.json")
 parser.add_argument("--label_list", help="the list of labels the index is based on", default="data/labels.json")
 parser.add_argument("--output_directory", help="directory for output files", default="./results")
-parser.add_argument("--stages", help="comma-separated list from: 'search', 'locsolv', 'ainv', 'mw', 'reduce', 'chabauty'")
+parser.add_argument("--stages", help="'all' or comma-separated list from: 'search', 'locsolv', 'ainv', 'mw', 'reduce', 'chabauty'")
 parser.add_argument("--missing", help="use list of labels with no preexisting file", action="store_true")
 args = parser.parse_args()
 
@@ -79,17 +79,19 @@ else:
 
 DATA_FILE = args.database
 HALT_ON_OBSTRUCTION = True # stop immediately if obstruction found?
-STAGES = frozenset(args.stages.lower().split(","))
+
 ALL_STAGES = {"search", "locsolv", "ainv", "mw", "reduce", "chabauty"}
-if "all" in STAGES:
+if args.stages.lower() == "all":
     STAGES = ALL_STAGES
-elif not STAGES.issubset(ALL_STAGES):
-    raise ValueError("Invalid stage label.")
+else:
+    STAGES = frozenset(args.stages.lower().split(","))
+    if not STAGES.issubset(ALL_STAGES):
+        raise ValueError("Invalid stage label.")
 
 magma.load("twocovers.m")
 
-# limit memory usage to 5 GB
-MEMORY_LIMIT = 5 * 1024 * 1024 * 1024
+# limit memory usage to 4 GB
+MEMORY_LIMIT = 4 * 1024 * 1024 * 1024
 resource.setrlimit(resource.RLIMIT_AS, (MEMORY_LIMIT, MEMORY_LIMIT))
 resource.setrlimit(resource.RLIMIT_RSS, (MEMORY_LIMIT, MEMORY_LIMIT))
 magma.eval("SetMemoryLimit({})".format(2 * MEMORY_LIMIT))
