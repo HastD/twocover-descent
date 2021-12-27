@@ -431,7 +431,7 @@ try:
         t = record_data(curve, OUTPUT_FILE, t)
         logging.info("Twist setup complete.")
 
-    if "search" in STAGES and curve["search_bound"] < SEARCH_BOUND:
+    if "search" in STAGES and ("search_bound" not in curve or curve["search_bound"] < SEARCH_BOUND):
         # Search for points on each twist, and choose a base point
         logging.info("Searching for rational points on each twist...")
         for i in range(len(curve["twists"])):
