@@ -122,7 +122,16 @@ def build_curve_data(label, poly_coeffs):
     f = R(coeffs)
     roots = [r[0] for r in f.roots()]
     # integer root that's smallest in absolute value
-    root = int(ZZ(min([r for r in roots if r.is_integer()], key=lambda x: abs(x))))
+    int_roots = [r for r in roots if r.is_integer()]
+    if len(int_roots) > 0:
+        root = int(ZZ(min(int_roots, key=lambda x: abs(x))))
+    else:
+        # handle case where there's no integral Weierstrass point
+        denom = min(r.denominator() for r in roots)
+        f = denom^6 * f(x / denom)
+        f /= gcd(list(f))
+        coeffs = [int(ZZ(c)) for c in list(f)]
+        root = int(ZZ(min((r[0] for r in f.roots() if r[0].is_integer()), key=lambda x: abs(x))))
     # factors of f(x)/(x - root), ordered by degree
     g_factors = sorted([p[0] for p in (f / (x - QQ(root))).factor()], key=lambda p: p.degree())
     return {
@@ -415,6 +424,7 @@ try:
         curve["twists"] = twist_data(curve)
         t = record_data(curve, OUTPUT_FILE, t)
         logging.info("Twist setup complete.")
+
     if "search" in STAGES and curve["search_bound"] < SEARCH_BOUND:
         # Search for points on each twist, and choose a base point
         logging.info("Searching for rational points on each twist...")
@@ -430,6 +440,7 @@ try:
                 curve["search_bound"] = SEARCH_BOUND
             t = record_data(curve, OUTPUT_FILE, t)
         logging.info("Finished searching for rational points on each twist.")
+
     if "locsolv" in STAGES and any(twist["loc_solv"] is None for twist in curve["twists"]):
         # Test whether the twists are locally solvable
         logging.info("Testing local solvability of twists...")
