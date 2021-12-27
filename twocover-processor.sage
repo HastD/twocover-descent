@@ -441,10 +441,8 @@ try:
             found_pts, base_pt = twist_point_search(curve, twist_index=i, bound=SEARCH_BOUND)
             twist["found_pts"] = found_pts
             twist["base_pt"] = base_pt
-            if i == len(curve["twists"]) - 1:
-                # record the search bound after searching the last twist
-                curve["search_bound"] = int(SEARCH_BOUND)
-            t = record_data(curve, OUTPUT_FILE, t)
+        curve["search_bound"] = int(SEARCH_BOUND)
+        t = record_data(curve, OUTPUT_FILE, t)
         logging.info("Finished searching for rational points on each twist.")
 
     if "locsolv" in STAGES and any(twist["loc_solv"] is None for twist in curve["twists"]):
