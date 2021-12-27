@@ -47,6 +47,7 @@ Here's the JSON data scheme that this script produces:
 import argparse
 import json
 import logging
+import random
 import resource
 import time
 
@@ -149,7 +150,7 @@ def build_curve_data(label, poly_coeffs):
         "verified": False,
         "hasse_principle": None,
         "obstruction_found": False,
-        "search_bound": 0,
+        "search_bound": int(0),
         "twists": None,
         "runtime": 0,
         "exception": False
@@ -334,6 +335,9 @@ def twist_chabauty(curve, twist_index, g_index):
     D = twist["g1"][g_index]
     assert D["chabauty_possible"]
     g = R(D["g"])
+    if D["chabauty_memory_error"]:
+        # try shuffling the order of the generators, sometimes this works
+        random.shuffle(D["gens"])
     pts = magma.function_call("twist_chabauty",
             [f, root, g, delta, twist["base_pt"], D["MW_orders"], D["gens"]])
     return [integral_proj_pt(P.Eltseq()) for P in pts]
@@ -437,9 +441,9 @@ try:
             found_pts, base_pt = twist_point_search(curve, twist_index=i, bound=SEARCH_BOUND)
             twist["found_pts"] = found_pts
             twist["base_pt"] = base_pt
-            if i = len(curve["twists"]) - 1:
+            if i == len(curve["twists"]) - 1:
                 # record the search bound after searching the last twist
-                curve["search_bound"] = SEARCH_BOUND
+                curve["search_bound"] = int(SEARCH_BOUND)
             t = record_data(curve, OUTPUT_FILE, t)
         logging.info("Finished searching for rational points on each twist.")
 
@@ -512,7 +516,11 @@ try:
                 t = record_data(curve, OUTPUT_FILE, t)
         t = record_data(curve, OUTPUT_FILE, t)
 
-    if "reduce" in STAGES and any(twist["base_pt"] is not None and not twist["verified"] for twist in curve["twists"]):
+    if "reduce" in STAGES and any(
+            twist["base_pt"] is not None
+            and not twist["verified"]
+            and not all(D["gens_reduced"] for D in twist["g1"])
+            for twist in curve["twists"]):
         # Use LLL reduction to find smaller MW generators
         logging.info("Reducing MW generators...")
         for twist in curve["twists"]:
