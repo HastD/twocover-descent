@@ -335,9 +335,6 @@ def twist_chabauty(curve, twist_index, g_index):
     D = twist["g1"][g_index]
     assert D["chabauty_possible"]
     g = R(D["g"])
-    if D["chabauty_memory_error"]:
-        # try shuffling the order of the generators, sometimes this works
-        random.shuffle(D["gens"])
     pts = magma.function_call("twist_chabauty",
             [f, root, g, delta, twist["base_pt"], D["MW_orders"], D["gens"]])
     return [integral_proj_pt(P.Eltseq()) for P in pts]
@@ -559,6 +556,10 @@ try:
                     continue
                 try:
                     logging.info("Running elliptic Chabauty (delta = {}, g = {})...".format(twist["coeffs"], D["g"]))
+                    if D["chabauty_memory_error"]:
+                        # try shuffling the order of the generators, sometimes this works
+                        logging.info("Previously encountered memory error; shuffling generators and trying again.")
+                        random.shuffle(D["gens"])
                     pts = twist_chabauty(curve, twist_index=i, g_index=j)
                 except (MemoryError, RuntimeError, TypeError):
                     logging.exception("(Likely) memory error occurred during Chabauty stage on twist with delta = {}, g = {}.".format(twist["coeffs"], D["g"]))
