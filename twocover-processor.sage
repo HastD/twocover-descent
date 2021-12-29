@@ -261,9 +261,8 @@ def get_aInv_data(curve, twist_index, g_index):
 
 def aInv_data_to_ell_curve(g, aInv_data):
     """Builds elliptic curve in Magma with given a-invariant data"""
-    aInv_arrays = [[QQ(c) for c in a] for a in aInv_data]
     K = magma.NumberField(g)
-    aInvs = [K(a) for a in aInv_arrays]
+    aInvs = [K([QQ(c) for c in a]) for a in aInv_data]
     E = magma.EllipticCurve(aInvs)
     return E
 
@@ -299,6 +298,8 @@ def reduce_MW_gens(gens_mag):
         else:
             torsion_gens.append(P)
     r = len(indep_gens)
+    if r <= 1:
+        return gens_mag
     M = magma.HeightPairingMatrix(indep_gens)
     I = magma.ScalarMatrix(r, M.BaseRing()(1))
     L = magma.Lattice(I, M)
