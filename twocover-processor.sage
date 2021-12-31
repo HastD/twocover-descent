@@ -303,13 +303,12 @@ def reduce_MW_gens(gens_mag):
     M = magma.HeightPairingMatrix(indep_gens)
     I = magma.ScalarMatrix(r, M.BaseRing()(1))
     L = magma.Lattice(I, M)
-    L_, T_mag = L.BasisReduction(nvals=2)
-    T = T_mag.sage()
+    L_, T = L.BasisReduction(nvals=2)
     new_indep_gens = []
     for i in range(r):
         P = indep_gens[0].Curve().Identity()
         for j in range(r):
-            P += T[i][j] * indep_gens[j]
+            P += T[i+1][j+1] * indep_gens[j]
         new_indep_gens.append(P)
     return torsion_gens + new_indep_gens
 
