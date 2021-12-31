@@ -294,7 +294,7 @@ function finite_chabauty(MWmap,Ecov) // MW, Jul 2018
  A:=[u[1] : u in U | IsCoercible(Q,Eltseq(u[2]))];
  return A,1; end function;
 
-intrinsic Chabauty(MWmap::Map, Ecov::MapSch:
+intrinsic MyChabauty(MWmap::Map, Ecov::MapSch:
                       InertiaDegreeBound:=20,
                       SmoothBound:=50,
                       PrimeBound:=30,
@@ -458,7 +458,7 @@ intrinsic Chabauty(MWmap::Map, Ecov::MapSch:
             continue g;
           end if;
           P0:=MWmap(g);
-          Eqs,order,IDXq:=ChabautyEquations(P0,Ecov,MWmap,Seqset(Prs[p]):
+          Eqs,order,IDXq:=MyChabautyEquations(P0,Ecov,MWmap,Seqset(Prs[p]):
                                     Centred);
           if IDXq eq 1 then
             //we have just proved that MWmap is saturated at p, so we can

@@ -11,18 +11,20 @@ freeze;
  *
  * RelevantCosets - finite field arguments at a collection of
  *                  same-characteristic primes
- * ChabautyEquations - System of equations 
+ * MyChabautyEquations - System of equations (patched)
  * TestEquations     - testing for eqations if 0 is only integral solution
  * SolveEquations    - Separated zero finder
- * Chabauty          - Wrapper routine to combine all functionality.
+ * MyChabauty          - Wrapper routine to combine all functionality. (patched)
  *
  ******************************************************************************/
 
+// With bugfix contributed by Michael Stoll, 2021-12-27, and patched in (as a stopgap until it's included in an update) by Daniel Hast.
+
 import "newell.m":ProjectiveReduction;
-import "../Arith/loctools.m":
+import "loctools.m":
        Minim, Maxim, IntNInf, MinValuation, MinPrec, ShiftVal,
        StripPrecisionlessTerms, FlattenPrecision, pAdicEvaluate, CoefficientByExponentVector;
-import "../Arith/pointlift.m":Hensel;
+import "pointlift.m":Hensel;
 
 declare verbose EllChab,3;
 
@@ -183,7 +185,7 @@ function FormalLog(E: Precision:=10)
    return log,Pz;
 end function;
 
-intrinsic ChabautyEquations(P0::PtEll,Ecov::MapSch,
+intrinsic MyChabautyEquations(P0::PtEll,Ecov::MapSch,
                 MWmap::Map,Prs::{RngOrdIdl}:Precision:=10,Centred:=false)->SetEnum
   {Returns a set of equations used in Chabauty methods}
 
@@ -245,35 +247,36 @@ intrinsic ChabautyEquations(P0::PtEll,Ecov::MapSch,
   Eqs:=[];
   zBmat:=[];
 
+/* BEGIN bugfix 2021-12-27 */
   for p in Prs do
-    Kp,toKp:=MyCompletion(p);
+    // First completion for the ramification test and for original prc
+    Kp:=MyCompletion(p);
     error if Valuation(Kp!Minimum(p))/(Minimum(p)-1) ge 1,
-      "Prime has too high ramification compared to residue characteristic.";
-
-    // ensure BaseRing(Kp) is pAdicField(Minimum(p))
-    // Completion, in the unramified case, sometimes returns a trivial extension 
-    // SRD, April 2016
-    if Degree(Kp) eq 1 then
-      Kp := BaseRing(Kp);
-    end if;
-    
-    pi:=UniformizingElement(Kp);
+     "Prime has too high ramification compared to residue characteristic.";
     prc:=2*(pAdicPrec+1)*AbsoluteRamificationDegree(Kp);
-    oldprec:=Kp`DefaultPrecision;
+
     repeat
-      Kp`DefaultPrecision:=prc;
+      Kp,toKp:=MyCompletion(p :Precision := prc);
+
+      // ensure BaseRing(Kp) is pAdicField(Minimum(p))
+      // Completion, in the unramified case, sometimes returns a trivial extension
+      // SRD, April 2016
+      if Degree(Kp) eq 1 then
+        Kp := BaseRing(Kp);
+      end if;
+      pi:=UniformizingElement(Kp);
       EKp:=PointSet(E,map<Domain(toKp)->Codomain(toKp)|a:->toKp(a)>);
-      error if prc gt Kp`DefaultPrecision, "Insufficient precision available";
       Gp:=[EKp![toKp(c)+O(pi^prc):c in Eltseq(MWmap(g))]:
                    g in OrderedGenerators(Domain(MWmap))];
-      L:=[p where p:=&+[v[i]*Gp[i]:i in [1..#Gp]]: v in KerPrsVec];
+      L:=[&+[v[i]*Gp[i]:i in [1..#Gp]]: v in KerPrsVec];
       zBp:=[-p[1]/p[2]:v in KerPrsVec | RelativePrecision(p[2]) gt 0 where p:=&+[v[i]*Gp[i]:i in [1..#Gp]]];
+      vprintf EllChab, 3: "==> zBp = %o\n", zBp;
       prc:=prc*2;
     until #zBp eq #KerPrsVec and MinPrec(zBp) ge (pAdicPrec+1)*RamificationDegree(Kp);
-    Kp`DefaultPrecision:=oldprec;
 
     zBmat:=zBmat cat [[Integers()!(Eltseq(a)[i]/Minimum(p)): a in zBp]:
                     i in [1..Degree(Kp)]];
+/* END bugfix 2021-12-27 */
 
     Kpz:=LaurentSeriesRing(Kp:Precision:=Kz`Precision);
     toKpz:=map<Kz->Kpz|f:->elt<Kpz|Valuation(f),[toKp(a):a in Eltseq(f)]>>;
@@ -496,7 +499,7 @@ function finite_chabauty(MWmap,Ecov) // MW, Jul 2018
  A:=[u[1] : u in U | IsCoercible(Q,Eltseq(u[2]))];
 return #A,A,1,<>; end function; // No idea what the return vals are ...
 
-intrinsic Chabauty(MWmap::Map, Ecov::MapSch, p::RngIntElt :
+intrinsic MyChabauty(MWmap::Map, Ecov::MapSch, p::RngIntElt :
 		   Cosets:=false,Aux:={},Precision:=10,Bound:=5)
 -> SetEnum,RngIntElt
   {Straightforward attempt for determining the set of points in the image
@@ -549,7 +552,7 @@ intrinsic Chabauty(MWmap::Map, Ecov::MapSch, p::RngIntElt :
     P0:=MWmap(g);
     vprint EllChab:"P0 =",P0;
     vprint EllChab:"Image under cover:",EvaluateByPowerSeries(Ecov,P0);
-    Eqs,order,IDXq:=ChabautyEquations(P0,Ecov,MWmap,Prs:
+    Eqs,order,IDXq:=MyChabautyEquations(P0,Ecov,MWmap,Prs:
                                   Centred,Precision:=Precision);
     vprint EllChab:"Order of vanishing:",order;
     IDX:=LCM(IDX,IDXq);
@@ -580,7 +583,7 @@ intrinsic Chabauty(MWmap::Map, Ecov::MapSch, p::RngIntElt :
     end if;
     P0:=MWmap(gr);
     vprint EllChab:"P0 =",P0;
-    Eqs,order,IDXq:=ChabautyEquations(P0,Ecov,MWmap,Prs:Precision:=Precision);
+    Eqs,order,IDXq:=MyChabautyEquations(P0,Ecov,MWmap,Prs:Precision:=Precision);
     IDX:=LCM(IDX,IDXq);
     V1,V2:=SolveEquations(Eqs);
     vprint EllChab:"Solutions to p-adic system of equations:",V1;
