@@ -30,7 +30,6 @@ Here's the JSON data scheme that this script produces:
                     "rank": <int>, # computed rank of MW group
                     "MW_proven": <bool>, # has the MW group been provably computed (conditional on GRH)?
                     "chabauty_possible": <bool>, # can we use elliptic Chabauty?
-                    "chabauty_memory_error": <bool>, # has a memory error occurred while running elliptic Chabauty?
                     "MW_orders": [<int>], # orders of generators of MW group
                     "gens": [[[str]]] # generators of MW group (str in the form "num/denom")
                     "gens_reduced": bool # whether the MW generators have already been reduced
@@ -47,7 +46,6 @@ Here's the JSON data scheme that this script produces:
 import argparse
 import json
 import logging
-import random
 import resource
 import time
 
@@ -80,6 +78,10 @@ else:
 
 DATA_FILE = args.database
 HALT_ON_OBSTRUCTION = True # stop immediately if obstruction found?
+
+class Obstruction(Exception):
+    """Exception thrown when an obstruction to success of the algorithm is found"""
+    pass
 
 ALL_STAGES = {"search", "locsolv", "ainv", "mw", "reduce", "chabauty"}
 if args.stages.lower() == "all":
@@ -182,7 +184,6 @@ def twist_data(curve):
                 "rank": None,
                 "MW_proven": None,
                 "chabauty_possible": None,
-                "chabauty_memory_error": False,
                 "gens": None,
                 "gens_reduced": None
             } for g in curve["g"]]
@@ -384,15 +385,14 @@ def lift_to_hyperelliptic_curve(f_coeffs, x, z):
             lifts = []
     return [[int(ZZ(n)) for n in lift] for lift in lifts]
 
-def record_data(data, filename, timestamp):
+def record_data(data, filename, timestamp, final=False):
     t = time.time()
     data["runtime"] += t - timestamp
     s = json.dumps(data)
     with open(filename, "w") as f:
         f.write(s)
-    if HALT_ON_OBSTRUCTION and data["obstruction_found"]:
-        logging.info("Obstruction found to provably computing rational points. Exiting.")
-        exit()
+    if HALT_ON_OBSTRUCTION and data["obstruction_found"] and not final:
+        raise Obstruction
     return t
 
 # Start recording runtime
@@ -537,7 +537,6 @@ try:
 
     if "chabauty" in STAGES:
         # Run elliptic Chabauty on the twists, where possible
-        memory_error = False
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
             if twist["base_pt"] is None:
@@ -554,27 +553,12 @@ try:
                 elif D["gens"] is None:
                     logging.info("Skipped Chabauty because MW generators haven't been computed (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     continue
-                try:
-                    logging.info("Running elliptic Chabauty (delta = {}, g = {})...".format(twist["coeffs"], D["g"]))
-                    if D["chabauty_memory_error"]:
-                        # try shuffling the order of the generators, sometimes this works
-                        logging.info("Previously encountered memory error; shuffling generators and trying again.")
-                        random.shuffle(D["gens"])
-                    pts = twist_chabauty(curve, twist_index=i, g_index=j)
-                except (MemoryError, RuntimeError, TypeError):
-                    logging.exception("(Likely) memory error occurred during Chabauty stage on twist with delta = {}, g = {}.".format(twist["coeffs"], D["g"]))
-                    D["chabauty_memory_error"] = True
-                    memory_error = True
-                    exception_handled = True
-                else:
-                    twist["pts"] = pts
-                    D["chabauty_memory_error"] = False
-                    twist["verified"] = True
-                    logging.info("Chabauty completed successfully (delta = {}, g = {}).".format(twist["coeffs"], D["g"]))
-                finally:
-                    t = record_data(curve, OUTPUT_FILE, t)
-                    if memory_error:
-                        raise MemoryError("Chabauty used too much memory.")
+                logging.info("Running elliptic Chabauty (delta = {}, g = {})...".format(twist["coeffs"], D["g"]))
+                pts = twist_chabauty(curve, twist_index=i, g_index=j)
+                twist["pts"] = pts
+                twist["verified"] = True
+                logging.info("Chabauty completed successfully (delta = {}, g = {}).".format(twist["coeffs"], D["g"]))
+                t = record_data(curve, OUTPUT_FILE, t)
 
         # Extract x-coordinates for points on the curve
         if not curve["verified"]:
@@ -592,7 +576,9 @@ try:
             curve["count"] = len(pts)
             logging.info("Rational points successfully computed.")
             t = record_data(curve, OUTPUT_FILE, t)
-except Exception as e:
+except Obstruction:
+    logging.info("Obstruction found to provably computing rational points. Exiting.")
+except:
     # If an uncaught exception happens at any point, record that it happened first
     curve["exception"] = True
     if not exception_handled:
@@ -600,5 +586,5 @@ except Exception as e:
 else:
     logging.info("Tasks complete. Recording data and exiting.")
 finally:
-    record_data(curve, OUTPUT_FILE, t)
+    record_data(curve, OUTPUT_FILE, t, final=True)
 
