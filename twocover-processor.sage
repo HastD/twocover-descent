@@ -337,7 +337,7 @@ def twist_chabauty(curve, twist_index, g_index):
     assert D["chabauty_possible"]
     g = R(D["g"])
     pts = magma.function_call("twist_chabauty",
-            [f, root, g, delta, twist["base_pt"], D["MW_orders"], D["gens"]])
+            [f, root, g, delta, twist["base_pt"], D["aInv"], D["MW_orders"], D["gens"]])
     return [integral_proj_pt(P.Eltseq()) for P in pts]
 
 def x_coords_of_twist_pts(curve):

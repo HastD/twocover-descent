@@ -478,7 +478,7 @@ function twist_ell_curve(f, root, g, delta)
     return E;
 end function;
 
-function twist_chabauty(f, root, g, delta, base_pt, MW_orders, MW_gens)
+function twist_chabauty(f, root, g, delta, base_pt, E_aInv, MW_orders, MW_gens)
     Z := genus5_canonical(f, root, delta);
     if Degree(g) eq 1 then
         K := RationalField();
@@ -494,7 +494,7 @@ function twist_chabauty(f, root, g, delta, base_pt, MW_orders, MW_gens)
     D_min_hyp := HyperellipticCurve(D_min);
     is_iso, min_map := IsIsomorphic(D, D_min_hyp);
     assert is_iso;
-    E := Jacobian(D_min);
+    E := EllipticCurve([K!a : a in E_aInv]);
     E1, j := EllipticCurve(D_min_hyp, min_map(phi(ZK!base_pt)));
     E1_to_D := Inverse(j) * Inverse(min_map);
     // This model of the Jacobian isn't optimal, so identify it with E for faster Mordell-Weil computations.
