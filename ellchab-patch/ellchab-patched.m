@@ -269,7 +269,7 @@ intrinsic MyChabautyEquations(P0::PtEll,Ecov::MapSch,
       Gp:=[EKp![toKp(c)+O(pi^prc):c in Eltseq(MWmap(g))]:
                    g in OrderedGenerators(Domain(MWmap))];
       L:=[&+[v[i]*Gp[i]:i in [1..#Gp]]: v in KerPrsVec];
-      zBp:=[-p[1]/p[2]:v in KerPrsVec | RelativePrecision(p[2]) gt 0 where p:=&+[v[i]*Gp[i]:i in [1..#Gp]]];
+      zBp:=[Kp | -p[1]/p[2]:v in KerPrsVec | RelativePrecision(p[2]) gt 0 where p:=&+[v[i]*Gp[i]:i in [1..#Gp]]];
       vprintf EllChab, 3: "==> zBp = %o\n", zBp;
       prc:=prc*2;
     until #zBp eq #KerPrsVec and MinPrec(zBp) ge (pAdicPrec+1)*RamificationDegree(Kp);
