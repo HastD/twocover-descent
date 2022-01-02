@@ -82,6 +82,10 @@ class Obstruction(Exception):
     """Exception thrown when an obstruction to success of the algorithm is found"""
     pass
 
+class PointCountError(Exception):
+    """Exception thrown when the computed point count doesn't agree with the known point count"""
+    pass
+
 ALL_STAGES = {"search", "locsolv", "ainv", "mw", "reduce", "chabauty"}
 if args.stages.lower() == "all":
     STAGES = ALL_STAGES
@@ -92,8 +96,8 @@ else:
 
 magma.load("twocovers.m")
 
-# limit memory usage to 4 GB
-MEMORY_LIMIT = 4 * 1024 * 1024 * 1024
+# limit memory usage to 8 GB
+MEMORY_LIMIT = 8 * 1024 * 1024 * 1024
 resource.setrlimit(resource.RLIMIT_AS, (MEMORY_LIMIT, MEMORY_LIMIT))
 resource.setrlimit(resource.RLIMIT_RSS, (MEMORY_LIMIT, MEMORY_LIMIT))
 magma.eval("SetMemoryLimit({})".format(2 * MEMORY_LIMIT))
@@ -383,6 +387,12 @@ def lift_to_hyperelliptic_curve(f_coeffs, x, z):
             lifts = []
     return [[int(ZZ(n)) for n in lift] for lift in lifts]
 
+def known_point_count(curve, bound=SEARCH_BOUND):
+    """Number of points on the curve up to the given bound"""
+    R.<x> = QQ[]
+    f = R(curve["coeffs"])
+    return len(magma.HyperellipticCurve(f).Points(Bound=bound))
+
 def record_data(data, filename, timestamp, final=False):
     t = time.time()
     data["runtime"] += t - timestamp
@@ -558,6 +568,8 @@ try:
                 logging.info("Running elliptic Chabauty (delta = {}, g = {})...".format(twist["coeffs"], D["g"]))
                 pts = twist_chabauty(curve, twist_index=i, g_index=j)
                 twist["pts"] = pts
+                if len(pts) != twist["found_pts"]:
+                    raise PointCountError("Twist point count does not match known point count! (delta = {})".format(twist["coeffs"]))
                 twist["verified"] = True
                 logging.info("Chabauty completed successfully (delta = {}, g = {}).".format(twist["coeffs"], D["g"]))
                 t = record_data(curve, OUTPUT_FILE, t)
@@ -576,6 +588,8 @@ try:
                 pts += lift_to_hyperelliptic_curve(curve["coeffs"], P[0], P[1])
             curve["pts"] = pts
             curve["count"] = len(pts)
+            if len(pts) != known_point_count(curve):
+                raise PointCountError("Computed point count on genus 2 curve does not match known point count!")
             logging.info("Rational points successfully computed.")
             t = record_data(curve, OUTPUT_FILE, t)
 except Obstruction:
