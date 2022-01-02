@@ -29,7 +29,6 @@ Here's the JSON data scheme that this script produces:
                     "aInv": [[str]], # a-invariant data (the strings are in the form "num/denom")
                     "rank": <int>, # computed rank of MW group
                     "MW_proven": <bool>, # has the MW group been provably computed (conditional on GRH)?
-                    "chabauty_possible": <bool>, # can we use elliptic Chabauty?
                     "MW_orders": [<int>], # orders of generators of MW group
                     "gens": [[[str]]] # generators of MW group (str in the form "num/denom")
                     "gens_reduced": bool # whether the MW generators have already been reduced
@@ -183,7 +182,6 @@ def twist_data(curve):
                 "aInv": None,
                 "rank": None,
                 "MW_proven": None,
-                "chabauty_possible": None,
                 "gens": None,
                 "gens_reduced": None
             } for g in curve["g"]]
@@ -334,8 +332,8 @@ def twist_chabauty(curve, twist_index, g_index):
     root = QQ(curve["root"])
     delta = twist_from_coeffs(twist["coeffs"])
     D = twist["g1"][g_index]
-    assert D["chabauty_possible"]
     g = R(D["g"])
+    assert D["MW_proven"] and D["rank"] < g.degree()
     pts = magma.function_call("twist_chabauty",
             [f, root, g, delta, twist["base_pt"], D["aInv"], D["MW_orders"], D["gens"]])
     return [integral_proj_pt(P.Eltseq()) for P in pts]
@@ -505,10 +503,10 @@ try:
                 D["MW_orders"] = orders
                 D["gens"] = gens
                 D["gens_reduced"] = False
-                degree = len(D["g"]) - 1
-                D["chabauty_possible"] = (MW_proven and rank < degree)
-                if not D["chabauty_possible"]:
-                    curve["obstruction_found"] = True
+                t = record_data(curve, OUTPUT_FILE, t)
+            if not any(D["MW_proven"] and D["rank"] < len(D["g"]) - 1 for D in twist["g1"]):
+                logging.info("Unable to use elliptic Chabauty on twist (delta = {})".format(twist["coeffs"]))
+                curve["obstruction_found"] = True
                 t = record_data(curve, OUTPUT_FILE, t)
         t = record_data(curve, OUTPUT_FILE, t)
 
@@ -546,13 +544,16 @@ try:
             for j in range(len(curve["g"])):
                 D = twist["g1"][j]
                 if twist["verified"]:
-                    logging.info("Skipped Chabauty because twist points already verified (delta = {})".format(twist["coeffs"]))
+                    logging.info("Skipped Chabauty because twist points already verified. (delta = {})".format(twist["coeffs"]))
                     break
-                elif not D["chabauty_possible"]:
-                    logging.info("Skipped Chabauty because of MW obstruction (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
+                elif not D["MW_proven"]:
+                    logging.info("Skipped Chabauty because MW group hasn't been provably computed. (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
+                    continue
+                elif D["rank"] >= len(D["g"]) - 1:
+                    logging.info("Skipped Chabauty because rank >= degree(g). (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     continue
                 elif D["gens"] is None:
-                    logging.info("Skipped Chabauty because MW generators haven't been computed (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
+                    logging.info("Skipped Chabauty because MW generators haven't been computed. (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     continue
                 logging.info("Running elliptic Chabauty (delta = {}, g = {})...".format(twist["coeffs"], D["g"]))
                 pts = twist_chabauty(curve, twist_index=i, g_index=j)
