@@ -20,7 +20,6 @@ Here's the JSON data scheme that this script produces:
             "found_pts": <int>, # number of points that have been found
             "base_pt": [<int>], # chosen base point of the twist
             "loc_solv": <bool>, # is the twist locally solvable?
-            "loc_solv_error": <bool>, # has an error occurred while determining local solvability?
             "pts": [[<int>]], # list of coordinates of points
             "verified": <bool>, # have we verified that the list of points is complete (conditional on GRH)?
             "g1": [
@@ -178,7 +177,6 @@ def twist_data(curve):
         "found_pts": None,
         "base_pt": None,
         "loc_solv": None,
-        "loc_solv_error": False,
         "pts": None,
         "verified": False,
         "g1": [{
@@ -427,7 +425,6 @@ else:
         logging.info("Obstruction already found. Exiting.")
         exit()
 
-exception_handled = False
 try:
     if curve["twists"] is None:
         # Compute coefficients of twist parameters
@@ -457,18 +454,11 @@ try:
             twist = curve["twists"][i]
             if twist["loc_solv"] is not None:
                 continue
-            try:
-                loc_solv = twists_locally_solvable(curve, twist_index=i)
-            except RuntimeError as e:
-                logging.exception("Exception occurred while checking local solvability (delta = {}).".format(twist["coeffs"]))
-                curve["twists"][i]["loc_solv_error"] = True
-                exception_handled = True
-                raise e
-            else:
-                twist["loc_solv"] = loc_solv
-                if not loc_solv:
-                    twist["pts"] = []
-                    twist["verified"] = True
+            loc_solv = twists_locally_solvable(curve, twist_index=i)
+            twist["loc_solv"] = loc_solv
+            if not loc_solv:
+                twist["pts"] = []
+                twist["verified"] = True
             t = record_data(curve, OUTPUT_FILE, t)
         logging.info("Finished local solvability testing.")
 
