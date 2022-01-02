@@ -505,7 +505,8 @@ try:
                 D["MW_orders"] = orders
                 D["gens"] = gens
                 D["gens_reduced"] = False
-                D["chabauty_possible"] = (MW_proven and rank < 5)
+                degree = len(D["g"]) - 1
+                D["chabauty_possible"] = (MW_proven and rank < degree)
                 if not D["chabauty_possible"]:
                     curve["obstruction_found"] = True
                 t = record_data(curve, OUTPUT_FILE, t)
