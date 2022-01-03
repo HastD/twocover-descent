@@ -546,14 +546,14 @@ try:
                 if twist["verified"]:
                     logging.info("Skipped Chabauty because twist points already verified. (delta = {})".format(twist["coeffs"]))
                     break
+                elif D["gens"] is None:
+                    logging.info("Skipped Chabauty because MW generators haven't been computed. (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
+                    continue
                 elif not D["MW_proven"]:
                     logging.info("Skipped Chabauty because MW group hasn't been provably computed. (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     continue
                 elif D["rank"] >= len(D["g"]) - 1:
                     logging.info("Skipped Chabauty because rank >= degree(g). (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
-                    continue
-                elif D["gens"] is None:
-                    logging.info("Skipped Chabauty because MW generators haven't been computed. (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     continue
                 logging.info("Running elliptic Chabauty (delta = {}, g = {})...".format(twist["coeffs"], D["g"]))
                 pts = twist_chabauty(curve, twist_index=i, g_index=j)
