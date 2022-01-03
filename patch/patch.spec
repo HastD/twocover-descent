@@ -1,0 +1,9 @@
+{
+    chabauty-MWS.m
+    loctools.m
+    pointlift.m
+    newell.m
+    localdata.m
+    ellchab.m
+    ellchab-MWS.m
+}

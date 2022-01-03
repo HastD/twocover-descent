@@ -20,9 +20,9 @@ Table of contents:
    * Section 7: Numerical computation of degree of isogeny
 */
 
-// Bug fix for elliptic Chabauty precision error that was sometimes causing an infinite loop
-// Fix due to Michael Stoll; should be fixed in future version of Magma.
-AttachSpec("ellchab-patch/patch.spec");
+// Patch for a couple bugs in elliptic Chabauty.
+// Fix due to Michael Stoll; should be included in future version of Magma.
+AttachSpec("patch/patch.spec");
 
 /*************************************************************
   Section 1: The Cassels map in genus 2
@@ -511,7 +511,7 @@ function twist_chabauty(f, root, g, delta, base_pt, E_aInv, MW_orders, MW_gens)
         V := Setseq(Set(A));
     else
         // Run elliptic Chabauty and record the set of points and the index parameter R
-        V, R := MyChabauty(mw_map, Ecov);
+        V, R := Chabauty(mw_map, Ecov);
     end if;
     VD := [E1_to_D(E_to_E1(mw_map(pt))) : pt in V];
     preimages := [Pullback(phi, pt) : pt in VD];
@@ -574,7 +574,7 @@ function chabauty_on_twist(f, root1, root2, delta : Effort := 1, Bound := 10000,
         V := Setseq(Set(A));
     elif TorsionFreeRank(A) lt Degree(MinimalPolynomial(root2)) then
         // Run elliptic Chabauty and record the set of points and the index parameter R
-        V, R := MyChabauty(mw_map, Ecov);
+        V, R := Chabauty(mw_map, Ecov);
     else // Rank is too high, give up and return any points found
         return pts_Z, A, false, [];
     end if;
