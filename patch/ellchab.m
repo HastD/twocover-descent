@@ -19,10 +19,10 @@ freeze;
  ******************************************************************************/
 
 import "newell.m":ProjectiveReduction;
-import "../Arith/loctools.m":
+import "loctools.m":
        Minim, Maxim, IntNInf, MinValuation, MinPrec, ShiftVal,
        StripPrecisionlessTerms, FlattenPrecision, pAdicEvaluate, CoefficientByExponentVector;
-import "../Arith/pointlift.m":Hensel;
+import "pointlift.m":Hensel;
 
 declare verbose EllChab,3;
 
