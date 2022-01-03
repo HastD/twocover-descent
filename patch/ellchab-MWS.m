@@ -31,7 +31,9 @@ function NewRelevantCosets(MWmap,Ecov,p:
                V:=[<a,b>where a,b:=Reduction(E,P):P in Prs];
   nEp:=[#e: e in Ep];
   vprint EllChab,2: "Group orders:",nEp;
-  idx:=[i: i in [1..#Ep] | Max(PrimeBasis(nEp[i])) le SmoothBound];
+  // Changed by Michael Stoll, 2022-01-02, to allow nEP[i] = 1.
+  idx:=[i: i in [1..#Ep] | forall{p : p in PrimeBasis(nEp[i]) | p le SmoothBound}];
+  //   idx:=[i: i in [1..#Ep] | Max(PrimeBasis(nEp[i])) le SmoothBound];
   if #idx eq 0 then
     vprint EllChab,2: "-"^40;
     vprintf EllChab,1: "Summary at %o: No smooth group orders. NO DATA.\n",p;
@@ -316,14 +318,28 @@ intrinsic Chabauty(MWmap::Map, Ecov::MapSch:
      for the routine to complete.
    InitialPrimes: Information at all good primes below this bound will be used initially.}
 
+  // Added by Michael Stoll, 2022-01-02:
+  // Some argument checking, plus replacing point set by elliptic curve if necessary.
+  // This should allow for using the map returned by MordellWeilGroup directly as MWmap.
+  E := Codomain(MWmap);
+  if Type(E) eq SetPtEll then
+    // Change codomain of MWmap (and E) to be the curve, not the point set.
+    E := Curve(E);
+    MWmap := map<Domain(MWmap) -> E | x :-> MWmap(x)>;
+  end if;
+  require Domain(Ecov) eq E: "Cover Ecov must have domain the codomain of MWmap";
+  require ISA(Type(Codomain(Ecov)),Prj) and Dimension(Codomain(Ecov)) eq 1:
+    "Cover Ecov should be to a projective line";
+  require BaseRing(Codomain(Ecov)) eq Rationals():
+    "The cover Ecov should map to a projective line defined over the rationals.";
+  //
+
   if ISA(Type(IndexBound),RngIntElt) and IndexBound ne -1 then
      IndexBound:=PrimeBasis(IndexBound);
   end if;
   
-  // MW: should have a bunch of requires, ... ?
   if IsFinite(Domain(MWmap)) then return finite_chabauty(MWmap,Ecov); end if;
 
-  E:=Codomain(MWmap);
   BadPrimes:=Seqset(PrimeBasis(&*[Denominator(a): a in aInvariants(E)]) cat
              PrimeBasis(Discriminant(IntegerRing(BaseRing(E)))) cat
              PrimeBasis(Numerator(Norm(Discriminant(E)))));

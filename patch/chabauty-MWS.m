@@ -92,6 +92,12 @@ freeze;
        some given rank 1 subgroup in cases when the rank is >= 2.
     -- Some slight editing of verbose messages.
 
+  January 2022, Michael Stoll:
+    -- prompted by a bug report by Daniel Hast that indicated that
+       DiscreteLogMapSmooth() gives an error when the group is trivial,
+       fixed this intrinsic so that it works correctly also in the
+       trivial case.
+
  ***********************************************************************/
 
 ////////////////////////////////////////////////////////////////////////
@@ -149,7 +155,15 @@ intrinsic DiscreteLogMapSmooth(G::GrpAb, m::Map) -> Map
  the standard inverse given by Inverse(m), in the case where #G is smooth.
  (This intrinsic is temporary and will be removed in a later release)}
 
+  require Domain(m) eq G: "the second argument must be a map with domain the first argument";
   n := #Invariants(G);
+  // added 2022-01-02, Michael Stoll
+  if n eq 0 then
+    // Group is trivial: return unique map from X to G.
+    // Without catching this special case, the assert below would throw an error.
+    return map<Codomain(m) -> G | x :-> G!0>;
+  end if;
+  //
   f := Factorization(#G);
   cofs := [&*[Integers()|f[i,1]^f[i,2] : i in [1..#f] | i ne j] : j in [1..#f]];
   _, refs := XGCD(cofs);
