@@ -14,6 +14,9 @@
 # Require avx instruction set
 #$ -l avx
 
+# Exclude Haswell architecture CPUs, which are having problems with Magma
+#$ -l cpu_arch=!haswell
+
 # Join stdout and stderr streams
 #$ -j y
 
