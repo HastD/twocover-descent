@@ -14,6 +14,7 @@ Here's the JSON data scheme that this script produces:
     "x-coords": [[numerator, denominator]], # list of x-coordinates of points on the curve
     "verified": <bool>, # is the above list verified complete (conditional on GRH)?
     "obstruction_found": <bool>, # have we found an obstruction to the algorithm completing?
+    "search_bound": <int>, # how far have we searched before for rational points on the twists?
     "twists": [
         {
             "coeffs": [str], # list of the coefficients of the twist parameter in the form "num/denom"
@@ -101,7 +102,8 @@ resource.setrlimit(resource.RLIMIT_AS, (MEMORY_LIMIT, MEMORY_LIMIT))
 resource.setrlimit(resource.RLIMIT_RSS, (MEMORY_LIMIT, MEMORY_LIMIT))
 magma.eval("SetMemoryLimit({})".format(2 * MEMORY_LIMIT))
 
-SEARCH_BOUND = 10000
+CURVE_SEARCH_BOUND = 10000
+TWIST_SEARCH_BOUND = 100000
 
 OUTPUT_FILE_PREFIX = "{}/curve-{}".format(args.output_directory, LABEL)
 OUTPUT_FILE = OUTPUT_FILE_PREFIX + ".json"
@@ -193,7 +195,7 @@ def twist_from_coeffs(coeff_data):
     R.<x> = QQ[]
     return R([QQ(c) for c in coeff_data])
 
-def twist_point_search(curve, twist_index, bound=SEARCH_BOUND):
+def twist_point_search(curve, twist_index, bound=TWIST_SEARCH_BOUND):
     R.<x> = QQ[]
     f = R(curve["coeffs"])
     root = R(curve["root"])
@@ -208,7 +210,7 @@ def twist_point_search(curve, twist_index, bound=SEARCH_BOUND):
     else:
         delta = twist_from_coeffs(twist["coeffs"])
         Z = magma.function_call("genus5_canonical", [f, root, delta])
-        pts = magma.PointSearch(Z, SEARCH_BOUND)
+        pts = magma.PointSearch(Z, bound)
         found_pts = len(pts)
         if len(pts) == 0:
             base_pt = None
@@ -358,7 +360,7 @@ def x_coords_of_twist_pts(curve):
             if z < 0:
                 x, z = -x, -z # normalize signs
             coords.append([int(ZZ(x / gcd(x, z))), int(ZZ(z / gcd(x, z)))])
-    return list(set(coords)), verified
+    return list(set([tuple(c) for c in coords])), verified
 
 def lift_to_hyperelliptic_curve(f_coeffs, x, z):
     """Return all (x : y : z) such that y^2 = f(x, z)"""
@@ -385,7 +387,7 @@ def lift_to_hyperelliptic_curve(f_coeffs, x, z):
             lifts = []
     return [[int(ZZ(n)) for n in lift] for lift in lifts]
 
-def known_point_count(curve, bound=SEARCH_BOUND):
+def known_point_count(curve, bound=CURVE_SEARCH_BOUND):
     """Number of points on the curve up to the given bound"""
     R.<x> = QQ[]
     f = R(curve["coeffs"])
@@ -433,17 +435,17 @@ try:
         t = record_data(curve, OUTPUT_FILE, t)
         logging.info("Twist setup complete.")
 
-    if "search" in STAGES and ("search_bound" not in curve or curve["search_bound"] < SEARCH_BOUND):
+    if "search" in STAGES and ("search_bound" not in curve or curve["search_bound"] < TWIST_SEARCH_BOUND):
         # Search for points on each twist, and choose a base point
         logging.info("Searching for rational points on each twist...")
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
             if twist["base_pt"] is not None or twist["verified"]:
                 continue
-            found_pts, base_pt = twist_point_search(curve, twist_index=i, bound=SEARCH_BOUND)
+            found_pts, base_pt = twist_point_search(curve, twist_index=i, bound=TWIST_SEARCH_BOUND)
             twist["found_pts"] = found_pts
             twist["base_pt"] = base_pt
-        curve["search_bound"] = int(SEARCH_BOUND)
+        curve["search_bound"] = int(TWIST_SEARCH_BOUND)
         t = record_data(curve, OUTPUT_FILE, t)
         logging.info("Finished searching for rational points on each twist.")
 
@@ -558,8 +560,8 @@ try:
                 logging.info("Running elliptic Chabauty (delta = {}, g = {})...".format(twist["coeffs"], D["g"]))
                 pts = twist_chabauty(curve, twist_index=i, g_index=j)
                 twist["pts"] = pts
-                if len(pts) != twist["found_pts"]:
-                    raise PointCountError("Twist point count does not match known point count! (delta = {})".format(twist["coeffs"]))
+                if len(pts) < twist["found_pts"]:
+                    raise PointCountError("Twist point count less than known point count! (delta = {})".format(twist["coeffs"]))
                 twist["verified"] = True
                 logging.info("Chabauty completed successfully (delta = {}, g = {}).".format(twist["coeffs"], D["g"]))
                 t = record_data(curve, OUTPUT_FILE, t)
@@ -578,7 +580,7 @@ try:
                 pts += lift_to_hyperelliptic_curve(curve["coeffs"], P[0], P[1])
             curve["pts"] = pts
             curve["count"] = len(pts)
-            if len(pts) != known_point_count(curve):
+            if len(pts) != known_point_count(curve, bound=CURVE_SEARCH_BOUND):
                 raise PointCountError("Computed point count on genus 2 curve does not match known point count!")
             logging.info("Rational points successfully computed.")
             t = record_data(curve, OUTPUT_FILE, t)
