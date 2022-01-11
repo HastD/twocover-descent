@@ -506,7 +506,7 @@ try:
                 D["gens"] = gens
                 D["gens_reduced"] = False
                 t = record_data(curve, OUTPUT_FILE, t)
-            if not any(D["MW_proven"] and D["rank"] < len(D["g"]) - 1 for D in twist["g1"]):
+            if all(D["rank"] is not None and D["rank"] >= len(D["g"]) - 1 for D in twist["g1"]):
                 logging.info("Unable to use elliptic Chabauty on twist (delta = {})".format(twist["coeffs"]))
                 curve["obstruction_found"] = True
                 t = record_data(curve, OUTPUT_FILE, t)
@@ -537,6 +537,12 @@ try:
         t = record_data(curve, OUTPUT_FILE, t)
 
     if "chabauty" in STAGES:
+        # Check for obstructions due to MW ranks being too high
+        for twist in curve["twists"]:
+            if twist["base_pt"] is not None and all(D["rank"] is not None and D["rank"] >= len(D["g"]) - 1 for D in twist["g1"]):
+                logging.info("Unable to use elliptic Chabauty on twist (delta = {})".format(twist["coeffs"]))
+                curve["obstruction_found"] = True
+                t = record_data(curve, OUTPUT_FILE, t)
         # Run elliptic Chabauty on the twists, where possible
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
@@ -585,6 +591,7 @@ try:
             logging.info("Rational points successfully computed.")
             t = record_data(curve, OUTPUT_FILE, t)
 except Obstruction:
+    curve["exception"] = False
     logging.info("Obstruction found to provably computing rational points. Exiting.")
 except:
     # If an uncaught exception happens at any point, record that it happened first
