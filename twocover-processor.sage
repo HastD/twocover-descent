@@ -587,8 +587,7 @@ except Obstruction:
 except:
     # If an uncaught exception happens at any point, record that it happened first
     curve["exception"] = True
-    if not exception_handled:
-        logging.exception("An exception occurred. Recording data and exiting.")
+    logging.exception("An exception occurred. Recording data and exiting.")
 else:
     logging.info("Tasks complete. Recording data and exiting.")
 finally:
