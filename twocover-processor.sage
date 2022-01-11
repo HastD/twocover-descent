@@ -358,7 +358,7 @@ def x_coords_of_twist_pts(curve):
             if z < 0:
                 x, z = -x, -z # normalize signs
             coords.append([int(ZZ(x / gcd(x, z))), int(ZZ(z / gcd(x, z)))])
-    return coords, verified
+    return list(set(coords)), verified
 
 def lift_to_hyperelliptic_curve(f_coeffs, x, z):
     """Return all (x : y : z) such that y^2 = f(x, z)"""
