@@ -329,6 +329,14 @@ def twist_MW_group(D):
     gens = parse_MW_gens(gens_mag)
     return rank, MW_proven, orders, gens
 
+def rank_degree_ordering(D):
+    if D["rank"] is not None:
+        rank = D["rank"]
+    else:
+        rank = 999 # arbitrary large number to make this sorted last
+    degree = len(D["g"]) - 1
+    return (rank, degree)
+
 def twist_chabauty(curve, twist_index, g_index):
     twist = curve["twists"][twist_index]
     R.<x> = QQ[]
@@ -549,7 +557,8 @@ try:
             if twist["base_pt"] is None:
                 logging.info("Skipped Chabauty because no base point (delta = {})".format(twist["coeffs"]))
                 continue
-            for j in range(len(curve["g"])):
+            g_index_order = sorted(range(len(curve["g"])), key=lambda j: rank_degree_ordering(twist["g1"][j]))
+            for j in g_index_order:
                 D = twist["g1"][j]
                 if twist["verified"]:
                     logging.info("Skipped Chabauty because twist points already verified. (delta = {})".format(twist["coeffs"]))
