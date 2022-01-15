@@ -506,13 +506,8 @@ function twist_chabauty(f, root, g, delta, base_pt, E_aInv, MW_orders, MW_gens)
     gens := [E![K!c : c in coords] : coords in MW_gens];
     mw := map< A -> E(K) | a :-> &+[E(K) | e[i] * gens[i] : i in [1 .. #gens]] where e is Eltseq(a) >;
     mw_map := map< A -> E | a :-> mw(a) >;
-    //mw_map := map< A -> E | a :-> &+[Eltseq(a)[i] * gens[i] : i in [1 .. #gens]] >;
-    if TorsionFreeRank(A) eq 0 and Degree(g) eq 1 then
-        V := Setseq(Set(A));
-    else
-        // Run elliptic Chabauty and record the set of points and the index parameter R
-        V, R := Chabauty(mw_map, Ecov);
-    end if;
+    // Run elliptic Chabauty and record the set of points and the index parameter R
+    V, R := Chabauty(mw_map, Ecov);
     VD := [E1_to_D(E_to_E1(mw_map(pt))) : pt in V];
     preimages := [Pullback(phi, pt) : pt in VD];
     rational_pts := &join[{Z!Eltseq(pt) : pt in Points(S) | IsCoercible(Z, Eltseq(pt))} : S in preimages];
