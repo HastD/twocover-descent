@@ -291,10 +291,13 @@ end function;
 //  return {i: i in [1..#L] | IsDefined(L,i)};
 //end intrinsic;
 
-function finite_chabauty(MWmap,Ecov) // MW, Jul 2018
- U:=[<u,Ecov(MWmap(u))> : u in Domain(MWmap)]; Q:=Rationals();
- A:=[u[1] : u in U | IsCoercible(Q,Eltseq(u[2]))];
- return A,1; end function;
+// Implementation fixed by Daniel Hast, 2022-01-14.
+function finite_chabauty(MWmap, Ecov)
+  U := [<u, Ecov(MWmap(u))> : u in Domain(MWmap)];
+  P1 := Codomain(Ecov);
+  A := [u[1] : u in U | IsCoercible(P1, Eltseq(u[2]))];
+  return A, 1;
+end function;
 
 intrinsic Chabauty(MWmap::Map, Ecov::MapSch:
                       InertiaDegreeBound:=20,

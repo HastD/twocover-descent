@@ -501,10 +501,13 @@ function toint(a)
   end if;
 end function;
 
-function finite_chabauty(MWmap,Ecov) // MW, Jul 2018
- U:=[<u,Ecov(MWmap(u))> : u in Domain(MWmap)]; Q:=Rationals();
- A:=[u[1] : u in U | IsCoercible(Q,Eltseq(u[2]))];
-return #A,A,1,<>; end function; // No idea what the return vals are ...
+// Implementation fixed by Daniel Hast, 2022-01-14.
+function finite_chabauty(MWmap, Ecov)
+  U := [<u, Ecov(MWmap(u))> : u in Domain(MWmap)];
+  P1 := Codomain(Ecov);
+  A := [u[1] : u in U | IsCoercible(P1, Eltseq(u[2]))];
+  return #A, A, 1, <>;
+end function;
 
 intrinsic Chabauty(MWmap::Map, Ecov::MapSch, p::RngIntElt :
 		   Cosets:=false,Aux:={},Precision:=10,Bound:=5)
