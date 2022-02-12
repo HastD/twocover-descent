@@ -79,7 +79,10 @@ else:
     raise ValueError("Must provide a label or label index.")
 
 DATA_FILE = args.database
-HALT_ON_OBSTRUCTION = True # stop immediately if obstruction found?
+if args.force:
+    HALT_ON_OBSTRUCTION = False
+else:
+    HALT_ON_OBSTRUCTION = True # stop immediately if obstruction found
 
 class Obstruction(Exception):
     """Exception thrown when an obstruction to success of the algorithm is found"""
