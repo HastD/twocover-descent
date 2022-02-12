@@ -59,6 +59,7 @@ parser.add_argument("--label_list", help="the list of labels the index is based 
 parser.add_argument("--output_directory", help="directory for output files", default="./results")
 parser.add_argument("--stages", help="'all' or comma-separated list from: 'search', 'locsolv', 'ainv', 'map', 'mw', 'reduce', 'chabauty'")
 parser.add_argument("--missing", help="use list of labels with no preexisting file", action="store_true")
+parser.add_argument("--force", help="Run regardless of whether points or obstructions already found", action="store_true")
 args = parser.parse_args()
 
 if args.label is not None:
@@ -452,12 +453,13 @@ except FileNotFoundError:
 else:
     assert curve["label"] == LABEL
     logging.info("Loaded curve data from file.")
-    if curve["verified"]:
-        logging.info("Rational points already verified; exiting.")
-        exit()
-    elif HALT_ON_OBSTRUCTION and curve["obstruction_found"]:
-        logging.info("Obstruction already found. Exiting.")
-        exit()
+    if not args.force:
+        if curve["verified"]:
+            logging.info("Rational points already verified; exiting.")
+            exit()
+        elif HALT_ON_OBSTRUCTION and curve["obstruction_found"]:
+            logging.info("Obstruction already found. Exiting.")
+            exit()
 
 try:
     if curve["twists"] is None:

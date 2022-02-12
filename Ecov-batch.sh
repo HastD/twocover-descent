@@ -37,7 +37,7 @@ do
     index=$(( ($SGE_TASK_ID - 1)*100 + $i ))
     if [ $index -lt 7692 ]
     then
-        sage --python ./twocover-processor.sage.py --index $index --output_directory /projectnb/arithgeo/drhast/twocover-results --stages map
+        sage --python ./twocover-processor.sage.py --index $index --output_directory /projectnb/arithgeo/drhast/twocover-results --stages map --force
     fi
 done
 
