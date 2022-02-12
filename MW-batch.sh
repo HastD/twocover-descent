@@ -14,6 +14,9 @@
 # Require avx instruction set
 #$ -l avx
 
+# Run only on nodes with Magma license
+#$ -l magma
+
 # Join stdout and stderr streams
 #$ -j y
 

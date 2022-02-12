@@ -9,10 +9,13 @@
 # Specify hard time limit for the job. 
 #   The job will be aborted if it runs longer than this time.
 #   The default time is 12 hours
-#$ -l h_rt=2:00:00
+#$ -l h_rt=3:00:00
 
 # Require avx instruction set
 #$ -l avx
+
+# Run only on nodes with Magma license
+#$ -l magma
 
 # Join stdout and stderr streams
 #$ -j y
