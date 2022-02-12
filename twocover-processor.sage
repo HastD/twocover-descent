@@ -26,12 +26,14 @@ Here's the JSON data scheme that this script produces:
             "g1": [
                 {
                     "g": [<int>], # list of coefficients of the corresponding factor of f
-                    "aInv": [[str]], # a-invariant data (the strings are in the form "num/denom")
+                    "aInv": [[<str>]], # a-invariant data (the strings are in the form "num/denom")
+                    "Ecov": [[[[<str>]], [[<int>]]]], # equation data for map Ecov: E -> P^1
                     "rank": <int>, # computed rank of MW group
                     "MW_proven": <bool>, # has the MW group been provably computed (conditional on GRH)?
                     "MW_orders": [<int>], # orders of generators of MW group
                     "gens": [[[str]]] # generators of MW group (str in the form "num/denom")
                     "gens_reduced": bool # whether the MW generators have already been reduced
+                    "x-coords": [[numerator, denominator]] # list of x-coordinates found by elliptic Chabauty
                 }
             ]
         }
@@ -55,7 +57,7 @@ label_group.add_argument("--label", help="the LMFDB label of the curve to proces
 parser.add_argument("--database", help="the database file to read from", default="data/g2c_curves-r2-w1.json")
 parser.add_argument("--label_list", help="the list of labels the index is based on", default="data/labels.json")
 parser.add_argument("--output_directory", help="directory for output files", default="./results")
-parser.add_argument("--stages", help="'all' or comma-separated list from: 'search', 'locsolv', 'ainv', 'mw', 'reduce', 'chabauty'")
+parser.add_argument("--stages", help="'all' or comma-separated list from: 'search', 'locsolv', 'ainv', 'map', 'mw', 'reduce', 'chabauty'")
 parser.add_argument("--missing", help="use list of labels with no preexisting file", action="store_true")
 args = parser.parse_args()
 
@@ -86,7 +88,7 @@ class PointCountError(Exception):
     """Exception thrown when the computed point count doesn't agree with the known point count"""
     pass
 
-ALL_STAGES = {"search", "locsolv", "ainv", "mw", "reduce", "chabauty"}
+ALL_STAGES = {"search", "locsolv", "ainv", "map", "mw", "reduce", "chabauty"}
 if args.stages.lower() == "all":
     STAGES = ALL_STAGES
 else:
@@ -184,10 +186,12 @@ def twist_data(curve):
         "g1": [{
                 "g": g,
                 "aInv": None,
+                "Ecov": None,
                 "rank": None,
                 "MW_proven": None,
                 "gens": None,
-                "gens_reduced": None
+                "gens_reduced": None,
+                "x-coords": None
             } for g in curve["g"]]
     } for d in coeff_data]
 
@@ -337,6 +341,17 @@ def rank_degree_ordering(D):
     degree = len(D["g"]) - 1
     return (rank, degree)
 
+def twist_chabauty_map(curve, twist_index, g_index):
+    twist = curve["twists"][twist_index]
+    R.<x> = QQ[]
+    f = R(curve["coeffs"])
+    root = QQ(curve["root"])
+    delta = twist_from_coeffs(twist["coeffs"])
+    D = twist["g1"][g_index]
+    g = R(D["g"])
+    Ecov = magma.function_call("twist_chabauty_map", [f, root, g, delta, twist["base_pt"], D["aInv"]])
+    return magma.function_call("pack_map", [Ecov]).sage()
+
 def twist_chabauty(curve, twist_index, g_index):
     twist = curve["twists"][twist_index]
     R.<x> = QQ[]
@@ -346,9 +361,9 @@ def twist_chabauty(curve, twist_index, g_index):
     D = twist["g1"][g_index]
     g = R(D["g"])
     assert D["MW_proven"] and D["rank"] < g.degree()
-    pts = magma.function_call("twist_chabauty",
-            [f, root, g, delta, twist["base_pt"], D["aInv"], D["MW_orders"], D["gens"]])
-    return [integral_proj_pt(P.Eltseq()) for P in pts]
+    x_coords, pts = magma.function_call("twist_chabauty",
+            [f, root, g, delta, D["aInv"], D["Ecov"], D["MW_orders"], D["gens"]], nvals=2)
+    return tuple([integral_proj_pt(P.Eltseq()) for P in pt_set] for pt_set in (x_coords, pts))
 
 def x_coords_of_twist_pts(curve):
     R.<x> = QQ[]
@@ -401,10 +416,19 @@ def known_point_count(curve, bound=CURVE_SEARCH_BOUND):
     f = R(curve["coeffs"])
     return len(magma.HyperellipticCurve(f).Points(Bound=bound))
 
+class SageJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if type(o) is Integer:
+            return int(o)
+        elif type(o) is Rational:
+            return str(o)
+        else:
+            return json.JSONEncoder.default(self, o)
+
 def record_data(data, filename, timestamp, final=False):
     t = time.time()
     data["runtime"] += t - timestamp
-    s = json.dumps(data)
+    s = json.dumps(data, cls=SageJSONEncoder)
     with open(filename, "w") as f:
         f.write(s)
     if HALT_ON_OBSTRUCTION and data["obstruction_found"] and not final:
@@ -493,6 +517,19 @@ try:
         logging.info("Finished computation of a-invariants.")
         t = record_data(curve, OUTPUT_FILE, t)
 
+    if "map" in STAGES and any(twist["base_pt"] is not None and any(D["Ecov"] is None for D in twist["g1"]) for twist in curve["twists"]):
+        # Compute defining equations of elliptic Chabauty map E -> P^1
+        for i in range(len(curve["twists"])):
+            twist = curve["twists"][i]
+            if twist["base_pt"] is None:
+                continue
+            for j in range(len(twist["g1"])):
+                D = twist["g1"][j]
+                if D["Ecov"] is None:
+                    logging.info("Computing elliptic Chabauty map... (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
+                    D["Ecov"] = twist_chabauty_map(curve, twist_index=i, g_index=j)
+                    logging.info("Elliptic Chabauty map computed. (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
+
     if "mw" in STAGES:
         # Compute the Mordell-Weil group of each twist where we found a base point
         for i in range(len(curve["twists"])):
@@ -572,8 +609,14 @@ try:
                 elif D["rank"] >= len(D["g"]) - 1:
                     logging.info("Skipped Chabauty because rank >= degree(g). (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     continue
+                if D["Ecov"] is None:
+                    logging.info("Computing elliptic Chabauty map... (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
+                    D["Ecov"] = twist_chabauty_map(curve, twist_index=i, g_index=j)
+                    logging.info("Elliptic Chabauty map computed. (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
+                    t = record_data(curve, OUTPUT_FILE, t)
                 logging.info("Running elliptic Chabauty (delta = {}, g = {})...".format(twist["coeffs"], D["g"]))
-                pts = twist_chabauty(curve, twist_index=i, g_index=j)
+                x_coords, pts = twist_chabauty(curve, twist_index=i, g_index=j)
+                D["x-coords"] = x_coords
                 twist["pts"] = pts
                 if len(pts) < twist["found_pts"]:
                     raise PointCountError("Twist point count less than known point count! (delta = {})".format(twist["coeffs"]))
@@ -586,7 +629,6 @@ try:
             coords, verified = x_coords_of_twist_pts(curve)
             curve["x-coords"] = coords
             curve["verified"] = verified
-            curve["exception"] = False
             t = record_data(curve, OUTPUT_FILE, t)
 
         if curve["pts"] is None and curve["verified"]:
@@ -595,6 +637,7 @@ try:
                 pts += lift_to_hyperelliptic_curve(curve["coeffs"], P[0], P[1])
             curve["pts"] = pts
             curve["count"] = len(pts)
+            curve["exception"] = False
             if len(pts) != known_point_count(curve, bound=CURVE_SEARCH_BOUND):
                 raise PointCountError("Computed point count on genus 2 curve does not match known point count!")
             logging.info("Rational points successfully computed.")

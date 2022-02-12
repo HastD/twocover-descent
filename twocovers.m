@@ -478,8 +478,31 @@ function twist_ell_curve(f, root, g, delta)
     return E;
 end function;
 
-function twist_chabauty(f, root, g, delta, base_pt, E_aInv, MW_orders, MW_gens)
-    Z := genus5_canonical(f, root, delta);
+/* Encodes a polynomial in several variables over a number field in a JSON-compatible format */
+function pack_polynomial(poly)
+    coeffs, monomials := CoefficientsAndMonomials(poly);
+    coeff_data := [Eltseq(c) : c in coeffs];
+    exponents := [Exponents(m) : m in monomials];
+    return <coeff_data, exponents>;
+end function;
+
+function pack_map(fn)
+    return [pack_polynomial(poly) : poly in DefiningEquations(fn)];
+end function;
+
+/* Reconstructs a polynomial from JSON-compatiable data */
+function unpack_polynomial(R, coeff_data, exponents)
+    K := BaseRing(R);
+    monomials := [Monomial(R, [Integers()!e : e in exps]) : exps in exponents];
+    coeffs := [K!c : c in coeff_data];
+    return Polynomial(coeffs, monomials);
+end function;
+
+function unpack_map(R, eqn_data)
+    return [unpack_polynomial(R, eqn[1], eqn[2]) : eqn in eqn_data];
+end function;
+
+function twist_chabauty_map(f, root, g, delta, base_pt, E_aInv)
     if Degree(g) eq 1 then
         K := RationalField();
         w := Roots(g)[1][1];
@@ -501,17 +524,33 @@ function twist_chabauty(f, root, g, delta, base_pt, E_aInv, MW_orders, MW_gens)
     is_iso, E_to_E1 := IsIsomorphic(E, E1);
     assert is_iso;
     // Construct the map to P^1 for elliptic Chabauty
-    Ecov := E_to_E1 * E1_to_D * map< D -> ProjectiveSpace(Rationals(), 1) | [D.1, D.3] >;
+    Ecov := Expand(E_to_E1 * E1_to_D * map< D -> ProjectiveSpace(Rationals(), 1) | [D.1, D.3] >);
+    return Ecov;
+end function;
+
+function twist_chabauty(f, root, g, delta, E_aInv, Ecov_data, MW_orders, MW_gens)
+    if Degree(g) eq 1 then
+        K := RationalField();
+        w := Roots(g)[1][1];
+    else
+        K<w> := NumberField(g);
+    end if;
+    E := EllipticCurve([K!a : a in E_aInv]);
+    P1 := ProjectiveSpace(Rationals(), 1);
+    Ecov := map< E -> P1 | unpack_map(CoordinateRing(Ambient(E)), Ecov_data) >;
+
     A := AbelianGroup(MW_orders);
     gens := [E![K!c : c in coords] : coords in MW_gens];
     mw := map< A -> E(K) | a :-> &+[E(K) | e[i] * gens[i] : i in [1 .. #gens]] where e is Eltseq(a) >;
     mw_map := map< A -> E | a :-> mw(a) >;
     // Run elliptic Chabauty and record the set of points and the index parameter R
     V, R := Chabauty(mw_map, Ecov);
-    VD := [E1_to_D(E_to_E1(mw_map(pt))) : pt in V];
-    preimages := [Pullback(phi, pt) : pt in VD];
-    rational_pts := &join[{Z!Eltseq(pt) : pt in Points(S) | IsCoercible(Z, Eltseq(pt))} : S in preimages];
-    return rational_pts;
+    x_coords := [Ecov(mw_map(pt)) : pt in V];
+
+    dup := twisted_duplication_map(f, root, delta);
+    preimages := [Pullback(dup, Codomain(dup)!Eltseq(pt)) : pt in x_coords];
+    rational_pts := &join[{pt : pt in Points(S)} : S in preimages];
+    return x_coords, rational_pts;
 end function;
 
 // Run elliptic Chabauty to determine points of Z_delta.
