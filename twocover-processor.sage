@@ -517,7 +517,7 @@ try:
         logging.info("Finished computation of a-invariants.")
         t = record_data(curve, OUTPUT_FILE, t)
 
-    if "map" in STAGES and any(twist["base_pt"] is not None and any(D["Ecov"] is None for D in twist["g1"]) for twist in curve["twists"]):
+    if "map" in STAGES and any(twist["base_pt"] is not None and any("Ecov" not in D or D["Ecov"] is None for D in twist["g1"]) for twist in curve["twists"]):
         # Compute defining equations of elliptic Chabauty map E -> P^1
         for i in range(len(curve["twists"])):
             twist = curve["twists"][i]
@@ -525,7 +525,7 @@ try:
                 continue
             for j in range(len(twist["g1"])):
                 D = twist["g1"][j]
-                if D["Ecov"] is None:
+                if "Ecov" not in D or D["Ecov"] is None:
                     logging.info("Computing elliptic Chabauty map... (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     D["Ecov"] = twist_chabauty_map(curve, twist_index=i, g_index=j)
                     logging.info("Elliptic Chabauty map computed. (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
@@ -609,7 +609,7 @@ try:
                 elif D["rank"] >= len(D["g"]) - 1:
                     logging.info("Skipped Chabauty because rank >= degree(g). (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     continue
-                if D["Ecov"] is None:
+                if "Ecov" not in D or D["Ecov"] is None:
                     logging.info("Computing elliptic Chabauty map... (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     D["Ecov"] = twist_chabauty_map(curve, twist_index=i, g_index=j)
                     logging.info("Elliptic Chabauty map computed. (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
