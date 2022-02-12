@@ -531,6 +531,7 @@ try:
                     logging.info("Computing elliptic Chabauty map... (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     D["Ecov"] = twist_chabauty_map(curve, twist_index=i, g_index=j)
                     logging.info("Elliptic Chabauty map computed. (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
+                    t = record_data(curve, OUTPUT_FILE, t)
 
     if "mw" in STAGES:
         # Compute the Mordell-Weil group of each twist where we found a base point
