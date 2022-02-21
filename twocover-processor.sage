@@ -562,7 +562,8 @@ try:
                 continue
             for D in twist["g1"]:
                 for c in get_class_group_fields(D):
-                    if not any(magma.IsIsomorphic(c[0], cgf[0]) for cgf in class_group_fields):
+                    # again have to use a hack for conversion of Magma booleans--I think this is fixed in Sage 9.4
+                    if not any((magma.IsIsomorphic(c[0], cgf[0]) == magma(True)) for cgf in class_group_fields):
                         class_group_fields.append(c)
         curve["class_group_fields"] = [[c[0].DefiningPolynomial().Eltseq().sage(), c[1], False] for c in class_group_fields]
         t = record_data(curve, OUTPUT_FILE, t)
