@@ -15,6 +15,8 @@ Here's the JSON data scheme that this script produces:
     "verified": <bool>, # is the above list verified complete (conditional on GRH)?
     "obstruction_found": <bool>, # have we found an obstruction to the algorithm completing?
     "search_bound": <int>, # how far have we searched before for rational points on the twists?
+    "hasse_principle": <bool>, # do the curve's twists all appear to satisfy the Hasse principle?
+    "class_group_fields": [[[<int>], <int>, <bool>]], # list of (field, class number, unconditional?) triples needed to prove rank bounds
     "twists": [
         {
             "coeffs": [str], # list of the coefficients of the twist parameter in the form "num/denom"
@@ -38,7 +40,6 @@ Here's the JSON data scheme that this script produces:
             ]
         }
     ],
-    "hasse_principle": <bool>, # do the curve's twists all appear to satisfy the Hasse principle?
     "runtime": <float>, # estimated runtime in seconds taken so far to compute this data
     "exception": False # did an unhandled exception occur?
 }
@@ -57,9 +58,10 @@ label_group.add_argument("--label", help="the LMFDB label of the curve to proces
 parser.add_argument("--database", help="the database file to read from", default="data/g2c_curves-r2-w1.json")
 parser.add_argument("--label_list", help="the list of labels the index is based on", default="data/labels.json")
 parser.add_argument("--output_directory", help="directory for output files", default="./results")
-parser.add_argument("--stages", help="'all' or comma-separated list from: 'search', 'locsolv', 'ainv', 'map', 'mw', 'reduce', 'chabauty'")
+parser.add_argument("--stages", help="'all' or comma-separated list from: 'search', 'locsolv', 'ainv', 'map', 'class', 'mw', 'reduce', 'chabauty'")
 parser.add_argument("--missing", help="use list of labels with no preexisting file", action="store_true")
 parser.add_argument("--force", help="Run regardless of whether points or obstructions already found", action="store_true")
+parser.add_argument("--unconditional", help="Make class group computations unconditional (extremely slow)", action="store_true")
 args = parser.parse_args()
 
 if args.label is not None:
@@ -92,7 +94,7 @@ class PointCountError(Exception):
     """Exception thrown when the computed point count doesn't agree with the known point count"""
     pass
 
-ALL_STAGES = {"search", "locsolv", "ainv", "map", "mw", "reduce", "chabauty"}
+ALL_STAGES = {"search", "locsolv", "ainv", "map", "class", "mw", "reduce", "chabauty"}
 if args.stages.lower() == "all":
     STAGES = ALL_STAGES
 else:
@@ -163,6 +165,7 @@ def build_curve_data(label, poly_coeffs):
         "hasse_principle": None,
         "obstruction_found": False,
         "search_bound": int(0),
+        "class_group_fields": None,
         "twists": None,
         "runtime": 0,
         "exception": False
@@ -276,6 +279,20 @@ def aInv_data_to_ell_curve(g, aInv_data):
     aInvs = [K([QQ(c) for c in a]) for a in aInv_data]
     E = magma.EllipticCurve(aInvs)
     return E
+
+def get_class_group_fields(D):
+    """Computes (field, class number) pairs needed for unconditional MW computation."""
+    R.<x> = QQ[]
+    g = R(D["g"])
+    E = aInv_data_to_ell_curve(g, D["aInv"])
+    cgf = [(c[1], len(c[2])) for c in magma.function_call("two_selmer_class_groups", [E])]
+    return cgf
+
+def unconditional_class_number(coeffs):
+    R.<x> = QQ[]
+    K = magma.NumberField(R(coeffs))
+    G = K.ClassGroup(Proof='"Full"')
+    return len(G)
 
 def extract_MW_gens(mw, A):
     """Extract MW generators from map mw: A -> E(K)"""
@@ -536,6 +553,21 @@ try:
                     logging.info("Elliptic Chabauty map computed. (delta = {}, g = {})".format(twist["coeffs"], D["g"]))
                     t = record_data(curve, OUTPUT_FILE, t)
 
+    if "class" in STAGES and ("class_group_fields" not in curve or curve["class_group_fields"] is None):
+        # Compute (field, class number) pairs needed to make MW computation unconditional
+        logging.info("Conditionally computing class numbers needed for MW computation...")
+        class_group_fields = []
+        for twist in curve["twists"]:
+            if twist["base_pt"] is None:
+                continue
+            for D in twist["g1"]:
+                for c in get_class_group_fields(D):
+                    if not any(magma.IsIsomorphic(c[0], cgf[0]) for cgf in class_group_fields):
+                        class_group_fields.append(c)
+        curve["class_group_fields"] = [[c[0].DefiningPolynomial().Eltseq().sage(), c[1], False] for c in class_group_fields]
+        t = record_data(curve, OUTPUT_FILE, t)
+        logging.info("Class numbers computed and recorded.")
+
     if "mw" in STAGES:
         # Compute the Mordell-Weil group of each twist where we found a base point
         for i in range(len(curve["twists"])):
@@ -647,6 +679,21 @@ try:
             if len(pts) != known_point_count(curve, bound=CURVE_SEARCH_BOUND):
                 raise PointCountError("Computed point count on genus 2 curve does not match known point count!")
             logging.info("Rational points successfully computed.")
+            t = record_data(curve, OUTPUT_FILE, t)
+
+    if "class" in STAGES and args.unconditional and not all(c[2] for c in curve["class_group_fields"]):
+        # Make class group computations unconditional
+        for c in curve["class_group_fields"]:
+            if c[2]:
+                # Skip class groups already computed unconditionally
+                continue
+            logging.info("Beginning unconditional class group computation...")
+            h = unconditional_class_number(c[0])
+            if h == c[1]:
+                c[2] = True
+            else:
+                raise ValueError("Unconditional class number does not match conditional class number! This is either a bug or a counterexample to GRH.")
+            logging.info("Class group computed unconditionally.")
             t = record_data(curve, OUTPUT_FILE, t)
 except Obstruction:
     curve["exception"] = False
