@@ -116,6 +116,7 @@ TWIST_SEARCH_BOUND = 100000
 OUTPUT_FILE_PREFIX = "{}/curve-{}".format(args.output_directory, LABEL)
 OUTPUT_FILE = OUTPUT_FILE_PREFIX + ".json"
 LOG_FILE = OUTPUT_FILE_PREFIX + ".log"
+CLASS_GROUP_FILE = OUTPUT_FILE_PREFIX + "-class-groups.m"
 
 # Set up log file
 logging.basicConfig(
@@ -288,12 +289,6 @@ def get_class_group_fields(D):
     cgf = [(c[1], len(c[2])) for c in magma.function_call("two_selmer_class_groups", [E])]
     return cgf
 
-def unconditional_class_number(coeffs):
-    R.<x> = QQ[]
-    K = magma.NumberField(R(coeffs))
-    G = K.ClassGroup(Proof='"Full"')
-    return len(G)
-
 def extract_MW_gens(mw, A):
     """Extract MW generators from map mw: A -> E(K)"""
     gens_mag = [magma("{}({})".format(mw.name(), a.name())) for a in A.gens()]
@@ -436,6 +431,26 @@ def known_point_count(curve, bound=CURVE_SEARCH_BOUND):
     R.<x> = QQ[]
     f = R(curve["coeffs"])
     return len(magma.HyperellipticCurve(f).Points(Bound=bound))
+
+def build_class_group_code(class_group_fields):
+    """Generate Magma file to unconditionally verify class groups"""
+    # Generate Magma file needed to make class group computations unconditional
+    code_lines = [
+            'SetVerbose("ClassGroup", 3);',
+            'R<x> := PolynomialRing(Rationals());'
+        ]
+    for c in class_group_fields:
+        if c[2]:
+            # Skip class groups already computed unconditionally
+            continue
+        code_lines += [
+                'K := NumberField(R!{}); K;'.format([QQ(n) for n in c[0]]),
+                'C := ClassGroup(K : Proof := "Full"); C;',
+                'assert #C eq {};'.format(int(c[1])),
+                'printf "Verified class number of %o is %o.\\n\\n", K, #C;'
+            ]
+    code_lines.append('exit;')
+    return "\n".join(code_lines)
 
 class SageJSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -683,19 +698,10 @@ try:
             t = record_data(curve, OUTPUT_FILE, t)
 
     if "class" in STAGES and args.unconditional and not all(c[2] for c in curve["class_group_fields"]):
-        # Make class group computations unconditional
-        for c in curve["class_group_fields"]:
-            if c[2]:
-                # Skip class groups already computed unconditionally
-                continue
-            logging.info("Beginning unconditional class group computation...")
-            h = unconditional_class_number(c[0])
-            if h == c[1]:
-                c[2] = True
-            else:
-                raise ValueError("Unconditional class number does not match conditional class number! This is either a bug or a counterexample to GRH.")
-            logging.info("Class group computed unconditionally.")
-            t = record_data(curve, OUTPUT_FILE, t)
+        code = build_class_group_code(curve["class_group_fields"])
+        with open(CLASS_GROUP_FILE, "w") as f:
+            f.write(code)
+        logging.info("To make class group computations unconditional, run the following Magma file: {}".format(CLASS_GROUP_FILE.split("/")[-1]))
 except Obstruction:
     curve["exception"] = False
     logging.info("Obstruction found to provably computing rational points. Exiting.")
