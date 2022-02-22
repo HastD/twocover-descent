@@ -51,6 +51,7 @@ import logging
 import resource
 import time
 
+# Set up command line options
 parser = argparse.ArgumentParser()
 label_group = parser.add_mutually_exclusive_group()
 label_group.add_argument("--index", type=int, help="the index of the LMFDB label of the curve to process")
@@ -58,12 +59,13 @@ label_group.add_argument("--label", help="the LMFDB label of the curve to proces
 parser.add_argument("--database", help="the database file to read from", default="data/g2c_curves-r2-w1.json")
 parser.add_argument("--label_list", help="the list of labels the index is based on", default="data/labels.json")
 parser.add_argument("--output_directory", help="directory for output files", default="./results")
-parser.add_argument("--stages", help="'all' or comma-separated list from: 'search', 'locsolv', 'ainv', 'map', 'class', 'mw', 'reduce', 'chabauty'")
+parser.add_argument("--stages", help="'all' or comma-separated list from: 'search', 'locsolv', 'ainv', 'map', 'class', 'mw', 'reduce', 'chabauty'", default="all")
 parser.add_argument("--missing", help="use list of labels with no preexisting file", action="store_true")
 parser.add_argument("--force", help="Run regardless of whether points or obstructions already found", action="store_true")
-parser.add_argument("--unconditional", help="Make class group computations unconditional (extremely slow)", action="store_true")
+parser.add_argument("--unconditional", help="Generate Magma file that, if run, makes the rank bounds unconditional", action="store_true")
 args = parser.parse_args()
 
+# Identify label of curve
 if args.label is not None:
     LABEL = args.label
 elif args.index is not None:
@@ -94,6 +96,7 @@ class PointCountError(Exception):
     """Exception thrown when the computed point count doesn't agree with the known point count"""
     pass
 
+# The computation is broken up into stages, which can be selected using the command-line option --stages
 ALL_STAGES = {"search", "locsolv", "ainv", "map", "class", "mw", "reduce", "chabauty"}
 if args.stages.lower() == "all":
     STAGES = ALL_STAGES
@@ -102,17 +105,20 @@ else:
     if not STAGES.issubset(ALL_STAGES):
         raise ValueError("Invalid stage label.")
 
+# Load the Magma code that implements the constructions of the paper
 magma.load("twocovers.m")
 
-# limit memory usage to 8 GB
+# Limit memory usage to 8 GB
 MEMORY_LIMIT = 8 * 1024 * 1024 * 1024
 resource.setrlimit(resource.RLIMIT_AS, (MEMORY_LIMIT, MEMORY_LIMIT))
 resource.setrlimit(resource.RLIMIT_RSS, (MEMORY_LIMIT, MEMORY_LIMIT))
 magma.eval("SetMemoryLimit({})".format(2 * MEMORY_LIMIT))
 
+# Bounds on how far we should search for points on the main curve and on the twists
 CURVE_SEARCH_BOUND = 10000
 TWIST_SEARCH_BOUND = 100000
 
+# Filenames where the output will be written
 OUTPUT_FILE_PREFIX = "{}/curve-{}".format(args.output_directory, LABEL)
 OUTPUT_FILE = OUTPUT_FILE_PREFIX + ".json"
 LOG_FILE = OUTPUT_FILE_PREFIX + ".log"
@@ -132,6 +138,7 @@ def integral_proj_pt(P):
     return [int(ZZ(c * denom)) for c in P]
 
 def build_curve_data(label, poly_coeffs):
+    """Initializes curve data from the given label and coefficients"""
     R.<x> = QQ[]
     C_mag = magma.HyperellipticCurve(R(poly_coeffs[0]), R(poly_coeffs[1]))
     C_even_mag = magma.function_call("even_weierstrass_model", C_mag)
@@ -173,6 +180,7 @@ def build_curve_data(label, poly_coeffs):
     }
 
 def twist_coeffs(curve):
+    """Coefficients of the twist parameters associated to the curve"""
     R.<x> = QQ[]
     f = R(curve["coeffs"])
     gens = magma.function_call("twist_param_generators", f)
@@ -180,6 +188,7 @@ def twist_coeffs(curve):
     return [[str(QQ(c)) for c in magma.Eltseq(d)] for d in twists]
 
 def twist_data(curve):
+    """Builds initial data structure for the twists"""
     if curve["twists"] is not None:
         # already computed
         return curve["twists"]
@@ -204,10 +213,12 @@ def twist_data(curve):
     } for d in coeff_data]
 
 def twist_from_coeffs(coeff_data):
+    """Turns the coefficient data for a delta-value back into a polynomial"""
     R.<x> = QQ[]
     return R([QQ(c) for c in coeff_data])
 
 def twist_point_search(curve, twist_index, bound=TWIST_SEARCH_BOUND):
+    """Search for points on the twist. Skips search if point already found or if not locally solvable."""
     R.<x> = QQ[]
     f = R(curve["coeffs"])
     root = R(curve["root"])
@@ -232,6 +243,7 @@ def twist_point_search(curve, twist_index, bound=TWIST_SEARCH_BOUND):
     return found_pts, base_pt
 
 def twists_locally_solvable(curve, twist_index):
+    """Wrapper for Magma function testing local solvability"""
     R.<x> = QQ[]
     f = R(curve["coeffs"])
     root = R(curve["root"])
@@ -255,6 +267,7 @@ def twists_locally_solvable(curve, twist_index):
             return False
 
 def hasse_principle(curve):
+    """Do all the twists satisfy the Hasse principle? Returns None if unknown."""
     for twist in curve["twists"]:
         if twist["found_pts"] is None or twist["loc_solv"] is None:
             return None
@@ -263,6 +276,7 @@ def hasse_principle(curve):
     return True
 
 def get_aInv_data(curve, twist_index, g_index):
+    """Extracts elliptic curve a-invariants and returns them in JSON-compatible format"""
     twist = curve["twists"][twist_index]
     R.<x> = QQ[]
     f = R(curve["coeffs"])
@@ -336,6 +350,7 @@ def reduce_MW_gens(gens_mag):
     return torsion_gens + new_indep_gens
 
 def twist_MW_group(D):
+    """Wrapper for Mordell-Weil group computation"""
     R.<x> = QQ[]
     g = R(D["g"])
     assert D["aInv"] is not None
@@ -350,6 +365,7 @@ def twist_MW_group(D):
     return rank, MW_proven, orders, gens
 
 def rank_degree_ordering(D):
+    """Sorting key for ordering first by rank, then by degree"""
     if D["rank"] is not None:
         rank = D["rank"]
     else:
@@ -358,6 +374,7 @@ def rank_degree_ordering(D):
     return (rank, degree)
 
 def twist_chabauty_map(curve, twist_index, g_index):
+    """Wrapper for Magma function computing the map Ecov: E -> P^1"""
     twist = curve["twists"][twist_index]
     R.<x> = QQ[]
     f = R(curve["coeffs"])
@@ -369,6 +386,7 @@ def twist_chabauty_map(curve, twist_index, g_index):
     return magma.function_call("pack_map", [Ecov]).sage()
 
 def twist_chabauty(curve, twist_index, g_index):
+    """Wrapper for Magma function that runs elliptic Chabauty on the twist"""
     twist = curve["twists"][twist_index]
     R.<x> = QQ[]
     f = R(curve["coeffs"])
@@ -382,6 +400,7 @@ def twist_chabauty(curve, twist_index, g_index):
     return tuple([integral_proj_pt(P.Eltseq()) for P in pt_set] for pt_set in (x_coords, pts))
 
 def x_coords_of_twist_pts(curve):
+    """Finds all points on P^1 associated with points on twists whose point-sets have been verified"""
     R.<x> = QQ[]
     f = R(curve["coeffs"])
     root = curve["root"]
@@ -453,6 +472,7 @@ def build_class_group_code(class_group_fields):
     return "\n".join(code_lines)
 
 class SageJSONEncoder(json.JSONEncoder):
+    """Extends the default JSON encoder to handle Sage's Integer and Rational types"""
     def default(self, o):
         if type(o) is Integer:
             return int(o)
@@ -462,6 +482,8 @@ class SageJSONEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, o)
 
 def record_data(data, filename, timestamp, final=False):
+    """Write data as JSON to the given file, updating the runtime with time since the provided timestamp.
+    Returns a new timestamp so this can be called repeatedly to provide good estimates of total runtime."""
     t = time.time()
     data["runtime"] += t - timestamp
     s = json.dumps(data, cls=SageJSONEncoder)
