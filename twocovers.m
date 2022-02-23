@@ -557,8 +557,14 @@ end function;
   Section 7: Numerical computation of degree of isogeny
  *************************************************************/
 
-function isogeny_degree_prep(roots : precision := 30)
+/*
+   Given a list of six distinct roots (e.g. [0, 1, -1, 2, -2, 3]), analytically compute an isogeny between two abelian varieties:
+   J = Jac(Z), where Z is a genus 5 curve associated by two-cover descent to the genus 2 curve C: y^2 = f(x), where the roots of f are the input;
+   A = E_1 x E_2 x E_3 x E_4 x E_5, where the E_i are the elliptic curves constructed as the codomain of genus1_map.
+*/
+function analytic_isogeny_computation(roots : precision := 30)
     assert #roots eq 6 and #Seqset(roots) eq 6;
+    precision := Max(precision, 30); // precision < 30 doesn't work
     root := roots[1];
     other_roots := roots[2 .. 6];
     QQ := Rationals();
@@ -566,7 +572,7 @@ function isogeny_degree_prep(roots : precision := 30)
     Rt<t> := PolynomialRing(QQ);
     f := &*[(t - r) : r in roots];
 
-    // Algebraic parts of the computation (domain side)
+    // Construct an equation of a planar model of the genus 5 curve
     Z := genus5_canonical(f, root, 1);
     bool, pr := Genus5PlaneCurveModel(Z);
     if bool then
@@ -579,53 +585,22 @@ function isogeny_degree_prep(roots : precision := 30)
     Qxy<x, y> := PolynomialRing(QQ, 2);
     poly_S := Evaluate(DefiningEquation(C), [x, y, 1]);
 
-    // Algebraic computation (codomain side)
-    phis := [genus1_map(f, root, w, 1) : w in other_roots];
-    phis := [Expand(map< Z -> ZK | [ZK.i : i in [1..5]] > * phi) where ZK is Domain(phi) : phi in phis];
-    Ds := [Codomain(phi) : phi in phis];
+    // Construct the genus 1 curves algebraically
+    Ds := [genus1_quotient(f div ((t - root)*(t - w)), root, 1) : w in other_roots];
 
     // Construct the Riemann surface associated to Z
     S := RiemannSurface(poly_S : Precision := precision);
     // Construct the elliptic curves as Riemann surfaces
-    Es := [RiemannSurface(HyperellipticPolynomials(D), 2) : D in Ds];
+    Es := [RiemannSurface(HyperellipticPolynomials(D), 2 : Precision := precision) : D in Ds];
 
-    return Z, C, S, Es, pr, phis;
-end function;
+    // Small period matrix of the analytic Jacobian of Z
+    P_J := SmallPeriodMatrix(S);
+    // Small period matrix of the product of the elliptic curves
+    P_A := DiagonalMatrix(CC, [SmallPeriodMatrix(E)[1][1] : E in Es]);
 
-function isogeny_degree_main(S, Es, bZ, pts_Z, pr, phis : precision := 30)
-    CC := ComplexField(precision);
-    bC := pr(bZ);
-    pts_C := [pr(P) : P in pts_Z];
-
-    bDs := [* phi(bZ) : phi in phis *];
-    pts_Ds := [* [phi(P) : P in pts_Z] : phi in phis *];
-
-    bS := S!Eltseq(bC);
-    pts_S := [S!Eltseq(P) : P in pts_C];
-    pts_J := [AbelJacobi(bS, P) : P in pts_S];
-    M_J := Matrix(CC, 5, 5, [Eltseq(v) : v in pts_J]);
-    // Assert that the points are linearly independent in the Jacobian (with plenty of room for numerical error)
-    assert Abs(Determinant(M_J)) ge 10^(-Floor(precision/3));
-
-    bEs := [* Es[i]!Eltseq(bDs[i]) : i in [1..5] *];
-    pts_Es := [* [Es[i]!Eltseq(P) : P in pts_Ds[i]] : i in [1..5] *];
-    pts_tori := [[AbelJacobi(bEs[i], P)[1][1] : P in pts_Es[i]] : i in [1..5]];
-    M_A := Matrix(CC, 5, 5, pts_tori);
-    assert Abs(Determinant(M_A)) ge 10^(-Floor(precision/3));
-
-    M := M_J * Transpose(M_A^(-1));
-    return M_J, M_A, M;
-end function;
-
-function isogeny_degree_computation(roots : bound := 100, precision := 30)
-    Z, C, S, Es, pr, phis := isogeny_degree_prep(roots : precision := precision);
-    pts_Z_search := [P : P in PointSearch(Z, bound) | IsNonsingular(C, pr(P))];
-    if #pts_Z_search lt 6 then
-        error "Too few points found on genus 5 curve; bound too low?";
-    end if;
-    bZ := pts_Z_search[1];
-    pts_Z := pts_Z_search[2 .. 6];
-    M_J, M_A, M := isogeny_degree_main(S, Es, bZ, pts_Z, pr, phis : precision := precision);
-    return M_J, M_A, M;
+    // Find an isogeny between P_J and P_A
+    bool, M := IsIsogenousPeriodMatrices(P_J, P_A);
+    // The determinant of M should be 32
+    return bool, M, Determinant(M);
 end function;
 

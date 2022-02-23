@@ -189,3 +189,80 @@ procedure descent_procedure(C : SearchBound := 10000, AssumeGRH := true, OutputF
     fprintf OutputFile, "Done.\nTotal time: %o\n", Time(t_total);
 end procedure;
 
+
+/*************************************************************
+  Section 7: Numerical computation of degree of isogeny
+ *************************************************************/
+
+function isogeny_degree_prep(roots : precision := 30)
+    assert #roots eq 6 and #Seqset(roots) eq 6;
+    root := roots[1];
+    other_roots := roots[2 .. 6];
+    QQ := Rationals();
+    CC := ComplexField(precision);
+    Rt<t> := PolynomialRing(QQ);
+    f := &*[(t - r) : r in roots];
+
+    // Algebraic parts of the computation (domain side)
+    Z := genus5_canonical(f, root, 1);
+    bool, pr := Genus5PlaneCurveModel(Z);
+    if bool then
+        C := Codomain(pr);
+    else
+        C, pr1 := Projection(Z);
+        C, pr2 := Projection(C);
+        pr := Expand(pr1 * pr2);
+    end if;
+    Qxy<x, y> := PolynomialRing(QQ, 2);
+    poly_S := Evaluate(DefiningEquation(C), [x, y, 1]);
+
+    // Algebraic computation (codomain side)
+    phis := [genus1_map(f, root, w, 1) : w in other_roots];
+    phis := [Expand(map< Z -> ZK | [ZK.i : i in [1..5]] > * phi) where ZK is Domain(phi) : phi in phis];
+    Ds := [Codomain(phi) : phi in phis];
+
+    // Construct the Riemann surface associated to Z
+    S := RiemannSurface(poly_S : Precision := precision);
+    // Construct the elliptic curves as Riemann surfaces
+    Es := [RiemannSurface(HyperellipticPolynomials(D), 2) : D in Ds];
+
+    return Z, C, S, Es, pr, phis;
+end function;
+
+function isogeny_degree_main(S, Es, bZ, pts_Z, pr, phis : precision := 30)
+    CC := ComplexField(precision);
+    bC := pr(bZ);
+    pts_C := [pr(P) : P in pts_Z];
+
+    bDs := [* phi(bZ) : phi in phis *];
+    pts_Ds := [* [phi(P) : P in pts_Z] : phi in phis *];
+
+    bS := S!Eltseq(bC);
+    pts_S := [S!Eltseq(P) : P in pts_C];
+    pts_J := [AbelJacobi(bS, P) : P in pts_S];
+    M_J := Matrix(CC, 5, 5, [Eltseq(v) : v in pts_J]);
+    // Assert that the points are linearly independent in the Jacobian (with plenty of room for numerical error)
+    assert Abs(Determinant(M_J)) ge 10^(-Floor(precision/3));
+
+    bEs := [* Es[i]!Eltseq(bDs[i]) : i in [1..5] *];
+    pts_Es := [* [Es[i]!Eltseq(P) : P in pts_Ds[i]] : i in [1..5] *];
+    pts_tori := [[AbelJacobi(bEs[i], P)[1][1] : P in pts_Es[i]] : i in [1..5]];
+    M_A := Matrix(CC, 5, 5, pts_tori);
+    assert Abs(Determinant(M_A)) ge 10^(-Floor(precision/3));
+
+    M := M_J * Transpose(M_A^(-1));
+    return M_J, M_A, M;
+end function;
+
+function isogeny_degree_computation(roots : bound := 100, precision := 30)
+    Z, C, S, Es, pr, phis := isogeny_degree_prep(roots : precision := precision);
+    pts_Z_search := [P : P in PointSearch(Z, bound) | IsNonsingular(C, pr(P))];
+    if #pts_Z_search lt 6 then
+        error "Too few points found on genus 5 curve; bound too low?";
+    end if;
+    bZ := pts_Z_search[1];
+    pts_Z := pts_Z_search[2 .. 6];
+    M_J, M_A, M := isogeny_degree_main(S, Es, bZ, pts_Z, pr, phis : precision := precision);
+    return M_J, M_A, M;
+end function;
+
